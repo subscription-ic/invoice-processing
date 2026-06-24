@@ -1,0 +1,165 @@
+name: extraction
+version: "2.0"
+description: "Extract structured financial data from document text — multilingual"
+model: gpt-4o
+temperature: 0.0
+max_tokens: 4096
+
+system_prompt: |
+  You are an expert financial document extraction specialist with deep knowledge of global
+  invoicing standards — including Indian GST, EU VAT, US sales tax, and other tax frameworks.
+
+  MULTILINGUAL SUPPORT (critical):
+  - This document may be written in ANY language — Hindi, Marathi, Spanish, French, German,
+    Arabic, Chinese, Japanese, or any other. Process it regardless of language.
+  - Extract every visible field accurately, even if the source language is not English.
+  - Translate ALL text field values (vendor name, buyer name, descriptions, addresses,
+    payment terms, expense categories) to ENGLISH in your output.
+  - Detect the primary language of the document and report it in _meta.document_language
+    and _meta.document_language_code (ISO 639-1, e.g. "hi", "mr", "es", "fr", "en").
+  - Set _meta.is_indian_document = true if the document is from India (GSTIN/PAN present,
+    or language is Hindi/Marathi/Gujarati/Tamil/Telugu/Kannada/Malayalam/Bengali/Punjabi/Urdu).
+    Set it to false for all other nationalities.
+
+  Do not hallucinate or infer values that are not present.
+  Normalize all dates to YYYY-MM-DD format.
+  Normalize all currency amounts to numeric (no commas, no currency symbols).
+  Return ONLY valid JSON matching the schema below.
+
+  CRITICAL ACCURACY RULES for Indian identifiers — transcribe CHARACTER BY CHARACTER, never guess:
+  - GSTIN is EXACTLY 15 characters: 2-digit state code + 10-character PAN + 1 entity digit + "Z" + 1 check char.
+    Pattern: ^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$
+    The 1st two characters are DIGITS (state code, e.g. 06, 09, 27) — read them precisely; do NOT
+    confuse 0 with O, 9 with g/q, 1 with I/l, 5 with S, 8 with B, 2 with Z.
+  - PAN is EXACTLY 10 characters: 5 letters + 4 digits + 1 letter. Pattern: ^[A-Z]{5}[0-9]{4}[A-Z]$
+  - CONSISTENCY CHECK: characters 3-12 of the GSTIN are IDENTICAL to the PAN. After extracting both,
+    verify GSTIN[2:12] == PAN. If they differ, re-read the document and correct the one that is wrong
+    (prefer whichever clearly matches the printed characters). Both must be internally consistent.
+  - IFSC is 11 characters: 4 letters + "0" + 6 alphanumerics. HSN/SAC codes are numeric.
+  - When a digit and a similar-looking letter are ambiguous in numeric fields (state code, PAN digits,
+    amounts), choose the DIGIT.
+  - For non-Indian documents, GSTIN/PAN/IFSC will be null — that is expected.
+
+  LINE ITEM COMPLETENESS — extract EVERY row in the items table as a separate line_item, including:
+  - product rows, FREIGHT / freight charges, packing, handling, and any miscellaneous charge rows.
+  - Do not merge or skip any row. The sum of all line_items' taxable amounts MUST equal the invoice
+    "Value Before Tax" / subtotal. If your line items don't add up to the printed subtotal, you have
+    missed a row — re-scan the table and include it (freight is the most commonly missed row).
+  - Put the per-line taxable value in "total_amount" (the pre-tax amount for that row), and the tax
+    rates/amounts (CGST/SGST/IGST) in their fields. Keep freight as its own line with its own tax rate.
+  - For non-Indian documents, use igst_rate/igst_amount for the applicable tax (VAT, sales tax, etc.).
+
+user_prompt_template: |
+  Extract all financial data from the following document text. The document may be in any language —
+  translate text fields to English and report the detected language.
+
+  Document Text:
+  {document_text}
+
+  Return JSON with this structure (include null for missing fields, never omit keys):
+  {
+    "_meta": {
+      "document_language": "English",
+      "document_language_code": "en",
+      "is_indian_document": true,
+      "was_translated": false,
+      "translation_notes": null
+    },
+    "vendor": {
+      "name": null,
+      "gstin": null,
+      "pan": null,
+      "vat_number": null,
+      "tax_id": null,
+      "address": null,
+      "country": null,
+      "bank_name": null,
+      "bank_account": null,
+      "bank_ifsc": null,
+      "bank_swift": null,
+      "bank_iban": null,
+      "email": null,
+      "phone": null
+    },
+    "invoice": {
+      "invoice_number": null,
+      "invoice_date": null,
+      "due_date": null,
+      "payment_terms": null,
+      "place_of_supply": null,
+      "currency": "INR"
+    },
+    "buyer": {
+      "name": null,
+      "gstin": null,
+      "address": null,
+      "country": null,
+      "cost_center": null,
+      "gl_code": null
+    },
+    "references": {
+      "po_number": null,
+      "grn_number": null,
+      "contract_number": null,
+      "lease_contract_number": null,
+      "employee_code": null,
+      "employee_name": null,
+      "asset_tag": null,
+      "asset_serial": null,
+      "project_code": null
+    },
+    "amounts": {
+      "subtotal": null,
+      "discount": null,
+      "cgst_amount": null,
+      "sgst_amount": null,
+      "igst_amount": null,
+      "vat_amount": null,
+      "tds_amount": null,
+      "total_tax": null,
+      "total_amount": null,
+      "amount_in_words": null
+    },
+    "line_items": [
+      {
+        "line_number": 1,
+        "item_code": null,
+        "description": null,
+        "hsn_sac_code": null,
+        "quantity": null,
+        "unit_price": null,
+        "uom": null,
+        "discount_amount": null,
+        "cgst_rate": null,
+        "sgst_rate": null,
+        "igst_rate": null,
+        "cgst_amount": null,
+        "sgst_amount": null,
+        "igst_amount": null,
+        "total_amount": null
+      }
+    ],
+    "lease": {
+      "property_address": null,
+      "billing_period": null,
+      "lease_start": null,
+      "lease_end": null,
+      "monthly_rent": null,
+      "gst_applicable": null
+    },
+    "employee_reimbursement": {
+      "employee_name": null,
+      "employee_code": null,
+      "claim_date": null,
+      "expense_category": null,
+      "receipts_attached": null,
+      "policy_limit": null
+    },
+    "petty_cash": {
+      "petty_cash_holder": null,
+      "cash_limit": null,
+      "expense_date": null,
+      "expense_category": null
+    },
+    "additional_fields": {}
+  }

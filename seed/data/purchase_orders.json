@@ -1,0 +1,25 @@
+[
+  {
+    "po_number": "IO-56969-2-0-000037",
+    "vendor_code": "V-JYOTI-HR",
+    "po_date": "2026-02-20",
+    "payment_terms": "NET15",
+    "description": "Raw material supply — Red Chilli Sauce (matches invoice 250143208)",
+    "lines": [
+      { "item_code": "D11011C", "description": "Red Chilli Sauce Cremica", "hsn": "21039020", "qty": 1, "price": 997.00, "uom": "Case", "igst": 5 },
+      { "item_code": "NI015", "description": "Freight", "hsn": "996812", "qty": 1, "price": 50.00, "uom": "EA", "igst": 18 }
+    ]
+  },
+  {
+    "po_number": "IO-56969-2-0-000014",
+    "vendor_code": "V-JYOTI-MH",
+    "po_date": "2026-01-05",
+    "payment_terms": "NET15",
+    "description": "Uniform supply — Caps & Aprons (matches invoice 250270929)",
+    "lines": [
+      { "item_code": "JI11007A", "description": "5 Panel Caps Standard Size - Iris", "hsn": "65050090", "qty": 3, "price": 151.96, "uom": "Pcs", "igst": 5 },
+      { "item_code": "JI11008A", "description": "Waist Apron with Choice mark - Iris", "hsn": "62171010", "qty": 2, "price": 144.13, "uom": "Pcs", "igst": 5 },
+      { "item_code": "NI013", "description": "Freight Charges-UF", "hsn": "996812", "qty": 1, "price": 250.00, "uom": "EA", "igst": 18 }
+    ]
+  }
+]

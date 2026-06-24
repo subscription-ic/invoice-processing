@@ -1,0 +1,129 @@
+# Default platform configuration
+# Override per-tenant by adding entries under the `tenants:` key.
+# Never store secrets here — use Azure Key Vault / environment variables.
+
+environment: development
+service_name: ap-automation-platform
+log_level: INFO
+
+default_tenant:
+  tenant_id: default
+  tenant_name: Default Tenant
+  currency: INR
+  timezone: Asia/Kolkata
+  country_code: IN
+
+  upload:
+    max_file_size_mb: 50
+    allowed_extensions:
+      - .pdf
+      - .jpg
+      - .jpeg
+      - .png
+      - .tiff
+      - .tif
+      - .docx
+    virus_scan_enabled: false
+    max_pages: 100
+
+  ocr:
+    min_image_quality_threshold: 0.4
+    min_acceptable_confidence: 0.6
+    min_word_count: 10
+    default_language: eng
+    enhancement_enabled: true
+
+  extraction:
+    llm_model: gpt-4o
+    llm_temperature: 0.0
+    llm_max_tokens: 4096
+    min_field_confidence: 0.75
+    max_missing_mandatory_fields: 2
+    token_budget_per_document: 8000
+    prompt_version: "1.0"
+
+  validation:
+    arithmetic_tolerance_percent: 0.01
+    date_max_age_days: 365
+    date_max_future_days: 30
+    duplicate_check_enabled: true
+    duplicate_window_days: 90
+
+  matching:
+    price_tolerance_percent: 2.0
+    quantity_tolerance_percent: 1.0
+    tax_tolerance_percent: 0.5
+    full_match_threshold: 0.95
+    partial_match_lower: 0.70
+    partial_match_upper: 0.94
+    failed_match_threshold: 0.69
+    auto_approve_threshold: 50000.0
+
+  confidence:
+    high_band_threshold: 0.85
+    medium_band_threshold: 0.65
+    low_band_threshold: 0.45
+    weights:
+      ocr_confidence: 0.15
+      extraction_confidence: 0.30
+      validation_pass: 0.20
+      profile_confidence: 0.10
+      match_score: 0.25
+
+  approval:
+    default_matrix:
+      - max_amount: 10000
+        levels: 1
+        role: AP_TEAM
+      - max_amount: 100000
+        levels: 2
+        role: FINANCE
+      - max_amount: 500000
+        levels: 2
+        role: APPROVER
+      - max_amount: null
+        levels: 3
+        role: APPROVER
+    l1_sla_hours: 24
+    l2_sla_hours: 48
+    escalation_sla_hours: 72
+
+  erp:
+    provider: mock
+    allow_mock_in_production: false
+
+  storage:
+    provider: local
+    allow_local_in_production: false
+    local_upload_dir: uploads
+    azure_container_name: invoices
+
+  retry:
+    max_retries: 3
+    backoff_strategy: EXPONENTIAL_JITTER
+    base_delay_seconds: 2
+    max_delay_seconds: 120
+
+  notification:
+    email_enabled: false
+    teams_enabled: false
+    sms_enabled: false
+    default_channels:
+      - email
+
+  features:
+    use_langgraph_pipeline: false
+    use_azure_storage: false
+    use_confidence_agent: true
+    use_virus_scan: false
+    use_token_tracking: true
+
+# Per-tenant overrides — uncomment and populate for multi-tenant deployments
+# tenants:
+#   acme_corp:
+#     tenant_id: acme_corp
+#     tenant_name: ACME Corporation
+#     matching:
+#       price_tolerance_percent: 1.0
+#     erp:
+#       provider: sap

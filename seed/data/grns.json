@@ -1,0 +1,23 @@
+[
+  {
+    "grn_number": "GRN-2026-000037",
+    "po_number": "IO-56969-2-0-000037",
+    "received_date": "2026-02-27",
+    "warehouse_location": "Dehradun Store 56969",
+    "lines": [
+      { "item_code": "D11011C", "received_qty": 1, "accepted_qty": 1, "uom": "Case" },
+      { "item_code": "NI015", "received_qty": 1, "accepted_qty": 1, "uom": "EA" }
+    ]
+  },
+  {
+    "grn_number": "GRN-2026-000014",
+    "po_number": "IO-56969-2-0-000014",
+    "received_date": "2026-01-12",
+    "warehouse_location": "Dehradun Store 56969",
+    "lines": [
+      { "item_code": "JI11007A", "received_qty": 3, "accepted_qty": 3, "uom": "Pcs" },
+      { "item_code": "JI11008A", "received_qty": 2, "accepted_qty": 2, "uom": "Pcs" },
+      { "item_code": "NI013", "received_qty": 1, "accepted_qty": 1, "uom": "EA" }
+    ]
+  }
+]

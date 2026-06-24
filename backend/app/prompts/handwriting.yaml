@@ -1,0 +1,24 @@
+name: handwriting_detection
+version: "1.0"
+description: "Classify whether a document image contains handwriting vs printed text"
+model: gpt-4o
+temperature: 0.0
+max_tokens: 256
+
+system_prompt: |
+  You are a document image classification specialist.
+  Your task is to analyze a document image and determine what percentage
+  of the text content is handwritten vs machine-printed/typed.
+
+user_prompt_template: |
+  Analyze this document image and classify the text content.
+  Determine what percentage appears handwritten (cursive, block letters written by hand)
+  vs printed (typed, computer-generated, stamped).
+
+  Return ONLY valid JSON:
+  {
+    "printed_percentage": 85,
+    "handwritten_percentage": 15,
+    "confidence": 0.92,
+    "notes": "Brief observation about the document"
+  }

@@ -1,0 +1,98 @@
+name: handwriting_extraction
+version: "1.0"
+description: "Direct structured extraction from handwritten/poor-scan invoice images via GPT-4o Vision"
+model: gpt-4o
+temperature: 0.0
+
+system_prompt: |
+  You are a specialist in reading Indian handwritten trade documents — challans, kachha bills,
+  delivery notes, cash memos, purchase vouchers, and informal vendor invoices.
+
+  Your task: extract ALL structured financial data DIRECTLY from the raw image in ONE pass.
+  Do NOT describe the image — extract the data.
+
+  READING RULES (follow every rule):
+  1. VENDOR / SUPPLIER = the letterhead / company name printed at the top of the form.
+  2. BUYER (M/S field) = whoever the bill is addressed to, often written in a box or M/S line.
+     Also check rubber stamps — a company stamp on the bill = the buyer who received the goods.
+  3. Line items = rows in the table (Particulars / Description column). Each row has:
+     - Qty/KG (left column), item name (middle), Rate (₹ per unit), Amount (₹ total).
+  4. Crossed-out / struck-through text: use the SURVIVING (un-struck) value only.
+  5. "140/-" means ₹140. Strip the "/-" suffix and return 140.
+  6. Amounts written as "1015-" mean 1015 (trailing dash = exact amount, no paise).
+  7. PO No / P.O. No followed by a number = purchase_order_number reference.
+     If a number is crossed out and replaced, use the replacement.
+  8. GRN / G.R.N. followed by a number = grn_number.
+  9. Dates in DD/MM/YY or DD/MM/YYYY → convert to YYYY-MM-DD.
+  10. No GSTIN on the document → set gstin to null. Small unregistered vendors are common.
+  11. UOM: default to "KG" for vegetable/food/grocery challans, "PCS" for others.
+  12. If a field is genuinely illegible, use null — do NOT guess.
+  13. transcribed_text: write out the FULL verbatim text you can read from the image,
+      line by line, exactly as written (including crossed-out portions noted as [STRUCK: x]).
+
+  CONFIDENCE SCORING (set _meta.extraction_confidence):
+  - 0.90+ : All key fields clearly readable
+  - 0.70–0.89 : Mostly readable, 1–2 uncertain characters
+  - 0.40–0.69 : Partially readable, some values estimated
+  - Below 0.40 : Cannot reliably extract → set is_unreadable true
+
+  Return ONLY valid JSON. No markdown fences, no explanation outside the JSON.
+
+user_prompt_template: |
+  Extract all structured data from this handwritten or scanned invoice/challan image.
+  Return exactly this JSON shape (use null for missing fields, 0 for missing tax amounts):
+
+  {
+    "invoice": {
+      "invoice_number": "string or null",
+      "invoice_date": "YYYY-MM-DD or null",
+      "currency": "INR"
+    },
+    "vendor": {
+      "name": "vendor/supplier company name",
+      "address": "full address or null",
+      "city": "city or null",
+      "state": "state or null",
+      "gstin": null,
+      "pan": null,
+      "phone": "phone or null",
+      "email": "email or null"
+    },
+    "buyer": {
+      "name": "buyer company name (from M/S field or rubber stamp)",
+      "address": "buyer address or null",
+      "gstin": null
+    },
+    "amounts": {
+      "subtotal": 0,
+      "total_tax": 0,
+      "total_amount": 1775
+    },
+    "references": {
+      "po_number": "PO number as string or null",
+      "grn_number": "GRN number as string or null",
+      "challan_number": "challan/bill number or null"
+    },
+    "line_items": [
+      {
+        "line_number": 1,
+        "description": "item description in English",
+        "quantity": 7,
+        "uom": "KG",
+        "unit_price": 140,
+        "total_amount": 1015,
+        "cgst_rate": 0, "sgst_rate": 0, "igst_rate": 0,
+        "cgst_amount": 0, "sgst_amount": 0, "igst_amount": 0
+      }
+    ],
+    "_meta": {
+      "transcribed_text": "full verbatim transcription of all visible text",
+      "document_language": "English",
+      "document_language_code": "en",
+      "is_indian_document": true,
+      "extraction_confidence": 0.85,
+      "is_unreadable": false,
+      "document_type": "challan or invoice or cash_memo etc",
+      "notes": "any notes about struck-out text, uncertain readings, stamps found"
+    }
+  }

@@ -1,0 +1,56 @@
+# Core Framework
+fastapi
+uvicorn[standard]
+python-multipart
+python-jose[cryptography]
+passlib[bcrypt]
+httpx
+
+# Database
+sqlalchemy
+asyncpg
+pg8000
+alembic
+greenlet
+
+# Redis & Celery
+redis
+celery
+flower
+
+# AI & ML
+openai
+numpy
+Pillow
+
+# LangGraph — workflow orchestration (Phase 4+)
+langgraph>=0.2.0
+langgraph-checkpoint-postgres
+langchain-core
+
+# Document Processing
+PyMuPDF
+pytesseract
+
+# OpenCV — install separately below if wheel available
+# opencv-python-headless
+
+# Data & Validation
+pydantic
+pydantic-settings
+email-validator
+
+# Utilities
+python-dotenv
+structlog
+tenacity
+PyYAML
+aiofiles
+anyio
+typing-extensions
+
+# Testing
+pytest
+pytest-asyncio
+pytest-cov
+faker

@@ -1,0 +1,157 @@
+{
+  "_meta": {
+    "document_language": "English",
+    "document_language_code": "en",
+    "is_indian_document": true,
+    "was_translated": false,
+    "translation_notes": null
+  },
+  "vendor": {
+    "name": "Paramount Legal",
+    "gstin": null,
+    "pan": "ABDFP9314N",
+    "vat_number": null,
+    "tax_id": null,
+    "address": null,
+    "country": null,
+    "bank_name": "HDFC",
+    "bank_account": "50200085136553",
+    "bank_ifsc": "HDFC0004872",
+    "bank_swift": null,
+    "bank_iban": null,
+    "email": null,
+    "phone": null
+  },
+  "invoice": {
+    "invoice_number": "PL/2025-26/916",
+    "invoice_date": "2026-03-23",
+    "due_date": null,
+    "payment_terms": null,
+    "place_of_supply": null,
+    "currency": "INR"
+  },
+  "buyer": {
+    "name": "Culinary Brands India Private Limited",
+    "gstin": null,
+    "address": "Shop No. 9, 10, Empire Heights, 75 New Arti Society, Tulsikunj, Prakash Nagar, Ghodasar, Ahmedabad, Gujarat \u2013 380043",
+    "country": "India",
+    "cost_center": null,
+    "gl_code": null
+  },
+  "references": {
+    "po_number": null,
+    "grn_number": null,
+    "contract_number": null,
+    "lease_contract_number": null,
+    "employee_code": null,
+    "employee_name": null,
+    "asset_tag": null,
+    "asset_serial": null,
+    "project_code": null
+  },
+  "amounts": {
+    "subtotal": "93170",
+    "discount": null,
+    "cgst_amount": null,
+    "sgst_amount": null,
+    "igst_amount": null,
+    "vat_amount": null,
+    "tds_amount": null,
+    "total_tax": null,
+    "total_amount": "93170",
+    "amount_in_words": null
+  },
+  "line_items": [
+    {
+      "line_number": 1,
+      "item_code": null,
+      "description": "Reimbursement for Registration of the Sub Lease Deed concerning property situated at Ghodasar Ahmedabad",
+      "hsn_sac_code": "998216",
+      "quantity": null,
+      "unit_price": null,
+      "uom": null,
+      "discount_amount": null,
+      "cgst_rate": null,
+      "sgst_rate": null,
+      "igst_rate": null,
+      "cgst_amount": null,
+      "sgst_amount": null,
+      "igst_amount": null,
+      "total_amount": "62980"
+    },
+    {
+      "line_number": 2,
+      "item_code": null,
+      "description": "Charges for certified copy",
+      "hsn_sac_code": null,
+      "quantity": null,
+      "unit_price": null,
+      "uom": null,
+      "discount_amount": null,
+      "cgst_rate": null,
+      "sgst_rate": null,
+      "igst_rate": null,
+      "cgst_amount": null,
+      "sgst_amount": null,
+      "igst_amount": null,
+      "total_amount": "3000"
+    },
+    {
+      "line_number": 3,
+      "item_code": null,
+      "description": "Misc. Charges (Photocopy etc.)",
+      "hsn_sac_code": null,
+      "quantity": null,
+      "unit_price": null,
+      "uom": null,
+      "discount_amount": null,
+      "cgst_rate": null,
+      "sgst_rate": null,
+      "igst_rate": null,
+      "cgst_amount": null,
+      "sgst_amount": null,
+      "igst_amount": null,
+      "total_amount": "2190"
+    },
+    {
+      "line_number": 4,
+      "item_code": null,
+      "description": "Professional Fee",
+      "hsn_sac_code": null,
+      "quantity": null,
+      "unit_price": null,
+      "uom": null,
+      "discount_amount": null,
+      "cgst_rate": null,
+      "sgst_rate": null,
+      "igst_rate": null,
+      "cgst_amount": null,
+      "sgst_amount": null,
+      "igst_amount": null,
+      "total_amount": "25000"
+    }
+  ],
+  "lease": {
+    "property_address": "Shop No. 9, 10, Empire Heights, 75 New Arti Society, Tulsikunj, Prakash Nagar, Ghodasar, Ahmedabad, Gujarat \u2013 380043",
+    "billing_period": null,
+    "lease_start": null,
+    "lease_end": null,
+    "monthly_rent": null,
+    "gst_applicable": null
+  },
+  "employee_reimbursement": {
+    "employee_name": null,
+    "employee_code": null,
+    "claim_date": null,
+    "expense_category": null,
+    "receipts_attached": null,
+    "policy_limit": null
+  },
+  "petty_cash": {
+    "petty_cash_holder": null,
+    "cash_limit": null,
+    "expense_date": null,
+    "expense_category": null
+  },
+  "additional_fields": {}
+}
