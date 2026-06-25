@@ -52,7 +52,7 @@ export default function Layout() {
       {/* App Bar */}
       <AppBar
         position="fixed"
-        sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, bgcolor: '#0d0d0d', borderBottom: '1px solid #D4AF37' }}
+        sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, bgcolor: '#0d0d0d', color: '#F5F5F5', borderBottom: '1px solid #D4AF37' }}
       >
         <Toolbar>
           <IconButton color="inherit" onClick={toggleSidebar} edge="start" sx={{ mr: 2 }}>

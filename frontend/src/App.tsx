@@ -24,20 +24,19 @@ const queryClient = new QueryClient({
 
 const theme = createTheme({
   palette: {
-    // Black & gold identity: light content surfaces, black chrome (sidebar/top bar/login),
-    // gold accents throughout. Strict palette — NO green / yellow / blue anywhere.
+    // Professional white theme. Brand = gold (buttons/accents) + black chrome (sidebar/top bar).
+    // Functional STATUS colors are semantic so the demo reads clearly:
+    //   success = green, warning = orange (stuck), error = red. No blue anywhere (info -> gold).
     mode: 'light',
-    primary: { main: '#A8862B', dark: '#6B5518', light: '#D4AF37', contrastText: '#000000' },
-    secondary: { main: '#8C6E2F', dark: '#5A4A1F', light: '#C9A227', contrastText: '#000000' },
-    // success/info/warning are all gold shades (no green/blue/yellow).
-    // error keeps a restrained red for destructive/critical states only.
-    success: { main: '#A8862B', dark: '#6B5518', light: '#D4AF37', contrastText: '#000000' },
-    info: { main: '#8C6E2F', dark: '#5A4A1F', light: '#C9A227', contrastText: '#000000' },
-    warning: { main: '#B8860B', dark: '#6B5518', light: '#D4AF37', contrastText: '#000000' },
-    error: { main: '#C0392B', dark: '#8E2A20', light: '#E07B6E', contrastText: '#FFFFFF' },
-    background: { default: '#FAF8F3', paper: '#FFFFFF' },
-    text: { primary: '#1A1A1A', secondary: '#6B5518' },
-    divider: 'rgba(168,134,43,0.25)',
+    primary: { main: '#A8862B', dark: '#6B5518', light: '#D4AF37', contrastText: '#FFFFFF' },
+    secondary: { main: '#1A1A1A', dark: '#000000', light: '#3A3A3A', contrastText: '#FFFFFF' },
+    success: { main: '#2E7D32', dark: '#1B5E20', light: '#4CAF50', contrastText: '#FFFFFF' },
+    warning: { main: '#ED6C02', dark: '#C25700', light: '#FF9800', contrastText: '#FFFFFF' },
+    error:   { main: '#D32F2F', dark: '#B71C1C', light: '#EF5350', contrastText: '#FFFFFF' },
+    info:    { main: '#8C6E2F', dark: '#5A4A1F', light: '#C9A227', contrastText: '#FFFFFF' },
+    background: { default: '#F7F8FA', paper: '#FFFFFF' },
+    text: { primary: '#1A1A1A', secondary: '#5A5A5A' },
+    divider: 'rgba(0,0,0,0.10)',
   },
   typography: {
     fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
@@ -69,6 +68,17 @@ function AuthBootstrap({ children }: { children: React.ReactNode }) {
         )
     })
   }, [hasToken, setAuth])
+
+  // Demo: once per browser session, wipe previously-uploaded docs so each demo
+  // session starts clean and new uploads number from DOC-101 again.
+  React.useEffect(() => {
+    if (!ready) return
+    if (sessionStorage.getItem('demo_reset_v1')) return
+    sessionStorage.setItem('demo_reset_v1', '1')
+    import('./api/client').then(({ documentsApi }) => {
+      documentsApi.demoReset().catch(() => {})
+    })
+  }, [ready])
 
   if (!ready) {
     return (

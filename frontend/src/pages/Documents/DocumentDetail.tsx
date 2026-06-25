@@ -243,20 +243,20 @@ export default function DocumentDetail() {
 
                 return visibleStages.map(({ stage, timedEntry, status }, visIdx) => {
                   const circleColor =
-                    status === 'COMPLETED' ? '#d4af37' :
-                    status === 'ERROR'     ? '#f44336' :
-                    status === 'RUNNING'   ? '#c9a227' :
-                    status === 'STUCK'     ? '#8c6e2f' : '#e0e0e0'
+                    status === 'COMPLETED' ? '#2e7d32' :
+                    status === 'ERROR'     ? '#d32f2f' :
+                    status === 'RUNNING'   ? '#ed6c02' :
+                    status === 'STUCK'     ? '#ed6c02' : '#bdbdbd'
                   const circleBg =
-                    status === 'COMPLETED' ? '#ffffff' :
+                    status === 'COMPLETED' ? '#e8f5e9' :
                     status === 'ERROR'     ? '#fdecea' :
-                    status === 'RUNNING'   ? '#ffffff' :
-                    status === 'STUCK'     ? '#ffffff' : '#ffffff'
+                    status === 'RUNNING'   ? '#fff4e5' :
+                    status === 'STUCK'     ? '#fff4e5' : '#f5f5f5'
                   const labelColor =
-                    status === 'WAITING'   ? '#e0e0e0' :
-                    status === 'RUNNING'   ? 'primary.main' :
+                    status === 'WAITING'   ? '#9e9e9e' :
+                    status === 'RUNNING'   ? '#ed6c02' :
                     status === 'ERROR'     ? 'error.main' :
-                    status === 'STUCK'     ? '#8c6e2f' : 'text.primary'
+                    status === 'STUCK'     ? '#ed6c02' : 'text.primary'
 
                   const isApprovalStage  = stage.key === 'APPROVAL'
                   const isExceptionStage = stage.key === 'EXCEPTION'
@@ -377,11 +377,11 @@ export default function DocumentDetail() {
                         transition: 'all 0.3s',
                         ...(isInteractive && { '&:hover': { opacity: 0.8 } }),
                       }}>
-                        {status === 'COMPLETED' && <CheckCircle    sx={{ fontSize: 18, color: '#d4af37' }} />}
-                        {status === 'ERROR'     && <Cancel         sx={{ fontSize: 18, color: '#f44336' }} />}
-                        {status === 'RUNNING'   && <CircularProgress size={16} color="primary" />}
-                        {status === 'STUCK'     && <PauseCircle    sx={{ fontSize: 18, color: '#8c6e2f' }} />}
-                        {status === 'WAITING'   && <Typography variant="caption" sx={{ fontSize: 11, color: '#e0e0e0', fontWeight: 700 }}>{visIdx + 1}</Typography>}
+                        {status === 'COMPLETED' && <CheckCircle    sx={{ fontSize: 18, color: '#2e7d32' }} />}
+                        {status === 'ERROR'     && <Cancel         sx={{ fontSize: 18, color: '#d32f2f' }} />}
+                        {status === 'RUNNING'   && <CircularProgress size={16} sx={{ color: '#ed6c02' }} />}
+                        {status === 'STUCK'     && <PauseCircle    sx={{ fontSize: 18, color: '#ed6c02' }} />}
+                        {status === 'WAITING'   && <Typography variant="caption" sx={{ fontSize: 11, color: '#9e9e9e', fontWeight: 700 }}>{visIdx + 1}</Typography>}
                       </Box>
                       <Typography sx={{
                         fontSize: 10, fontWeight: status === 'RUNNING' || status === 'STUCK' ? 700 : 600, mt: 0.6,
@@ -407,9 +407,9 @@ export default function DocumentDetail() {
                     <Box sx={{
                       flexShrink: 0, width: 20, height: 2, mt: '17px',
                       bgcolor:
-                        status === 'COMPLETED' ? '#d4af37' :
-                        status === 'ERROR'     ? '#f44336' :
-                        status === 'STUCK'     ? '#8c6e2f' : '#e0e0e0',
+                        status === 'COMPLETED' ? '#2e7d32' :
+                        status === 'ERROR'     ? '#d32f2f' :
+                        status === 'STUCK'     ? '#ed6c02' : '#e0e0e0',
                       transition: 'background-color 0.4s',
                     }} />
                   ) : null
@@ -1016,8 +1016,8 @@ export default function DocumentDetail() {
               <Grid item xs={12}>
                 <Card sx={{
                   border: '2px solid',
-                  borderColor: explanation.decision_color === 'success' ? '#d4af37' : explanation.decision_color === 'error' ? '#f44336' : explanation.decision_color === 'warning' ? '#d4af37' : '#d4af37',
-                  bgcolor: explanation.decision_color === 'success' ? '#ffffff' : explanation.decision_color === 'error' ? '#fdecea' : explanation.decision_color === 'warning' ? '#ffffff' : '#ffffff',
+                  borderColor: explanation.decision_color === 'success' ? '#2e7d32' : explanation.decision_color === 'error' ? '#d32f2f' : explanation.decision_color === 'warning' ? '#ed6c02' : '#A8862B',
+                  bgcolor: explanation.decision_color === 'success' ? '#e8f5e9' : explanation.decision_color === 'error' ? '#fdecea' : explanation.decision_color === 'warning' ? '#fff4e5' : '#FBF6E9',
                 }}>
                   <CardContent>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>

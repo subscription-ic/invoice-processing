@@ -13,7 +13,7 @@ _pipeline_pool = ThreadPoolExecutor(max_workers=20, thread_name_prefix="pipeline
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status
 from fastapi.responses import FileResponse
-from sqlalchemy import desc, func, select
+from sqlalchemy import bindparam, desc, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -24,6 +24,45 @@ from app.models.models import Document, DocumentStatus, User, WorkflowState
 from app.schemas.schemas import DocumentListOut, DocumentOut, DocumentUploadResponse, WorkflowStateOut
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
+
+# Child tables referencing documents WITHOUT ondelete=CASCADE — must be cleared
+# manually before deleting a document (the CASCADE-configured ones drop automatically).
+_NONCASCADE_CHILDREN = [
+    "audit_logs", "notifications", "workflow_state_archive", "workflow_timelines",
+    "notification_logs", "retry_logs", "exception_resolution_history", "token_usage",
+]
+
+
+@router.post("/demo-reset")
+async def demo_reset(
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user),
+):
+    """Demo helper: delete all UPLOADED documents (DOC-101 and above), leaving the
+    100 static seed documents (DOC-1..DOC-100) intact. Called by the UI once per
+    browser session so uploads always restart from DOC-101."""
+    rows = (await db.execute(
+        select(Document.id, Document.document_id).where(Document.document_id.like("DOC-%"))
+    )).all()
+    ids = []
+    for _id, docnum in rows:
+        suf = docnum.split("-", 1)[1] if "-" in docnum else ""
+        if suf.isdigit() and int(suf) > 100:
+            ids.append(str(_id))
+    if not ids:
+        return {"deleted": 0}
+
+    for tbl in _NONCASCADE_CHILDREN:
+        stmt = text(f"DELETE FROM {tbl} WHERE document_id::text IN :ids").bindparams(
+            bindparam("ids", expanding=True)
+        )
+        await db.execute(stmt, {"ids": ids})
+    await db.execute(
+        text("DELETE FROM documents WHERE id::text IN :ids").bindparams(bindparam("ids", expanding=True)),
+        {"ids": ids},
+    )
+    await db.commit()
+    return {"deleted": len(ids)}
 
 
 @router.post("/upload", response_model=DocumentUploadResponse, status_code=202)
@@ -54,8 +93,16 @@ async def upload_document(
     if not is_valid:
         raise HTTPException(status_code=400, detail=error_msg)
 
-    # Create document + store file (intake, done inline so we return a real ID)
-    doc_ref = f"DOC-{datetime.now(timezone.utc):%Y%m%d}-{str(_uuid.uuid4())[:8].upper()}"
+    # Sequential demo-friendly IDs: static seed docs are DOC-1..DOC-100; uploads
+    # continue from DOC-101. The demo-reset endpoint wipes uploads back to DOC-101.
+    _rows = (await db.execute(select(Document.document_id).where(Document.document_id.like("DOC-%")))).all()
+    _nums = []
+    for (_did,) in _rows:
+        _suf = _did.split("-", 1)[1] if "-" in _did else ""
+        if _suf.isdigit():
+            _nums.append(int(_suf))
+    _next = max((max(_nums) + 1) if _nums else 101, 101)
+    doc_ref = f"DOC-{_next}"
     ext = Path(file.filename or "f").suffix.lstrip(".").lower()
     storage = get_storage()
     rel_path = storage.raw_path(doc_ref, ext)

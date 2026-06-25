@@ -5,11 +5,11 @@ import {
   Select, MenuItem, FormControl, InputLabel, IconButton, Tooltip,
 } from '@mui/material'
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid'
-import { Visibility, VisibilityOff, Refresh, Delete } from '@mui/icons-material'
+import { Visibility, Refresh, Delete } from '@mui/icons-material'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { documentsApi } from '../../api/client'
 import type { Document } from '../../types'
-import { formatDate, formatDateTime, maskMiddle, maskAmount } from '../../utils/format'
+import { formatDate, formatDateTime } from '../../utils/format'
 
 const STATUS_COLORS: Record<string, 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'> = {
   COMPLETED: 'success',
@@ -44,7 +44,6 @@ export default function Documents() {
   const [profileFilter, setProfileFilter] = useState('')
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(25)
-  const [maskPii, setMaskPii] = useState(true)
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => documentsApi.delete(id),
@@ -91,19 +90,17 @@ export default function Documents() {
     },
     {
       field: 'vendor_name', headerName: 'Vendor', width: 160,
-      renderCell: (params: GridRenderCellParams) =>
-        maskPii && params.value ? maskMiddle(String(params.value)) : (params.value || '—'),
+      renderCell: (params: GridRenderCellParams) => params.value || '—',
     },
     {
       field: 'invoice_number', headerName: 'Invoice #', width: 140,
-      renderCell: (params: GridRenderCellParams) =>
-        maskPii && params.value ? maskMiddle(String(params.value)) : (params.value || '—'),
+      renderCell: (params: GridRenderCellParams) => params.value || '—',
     },
     {
       field: 'total_amount', headerName: 'Amount', width: 130,
       renderCell: (params: GridRenderCellParams) => {
         if (!params.value) return '—'
-        return maskPii ? maskAmount() : new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(params.value)
+        return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(params.value)
       },
     },
     {
@@ -150,11 +147,6 @@ export default function Documents() {
           <Typography variant="body2" color="text.secondary">All uploaded documents and their processing status</Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-          <Tooltip title={maskPii ? 'Show sensitive data' : 'Mask sensitive data'}>
-            <IconButton size="small" onClick={() => setMaskPii((v) => !v)} color={maskPii ? 'warning' : 'success'}>
-              {maskPii ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
-            </IconButton>
-          </Tooltip>
           <Button startIcon={<Refresh />} onClick={() => refetch()} variant="outlined" size="small">
             Refresh
           </Button>

@@ -63,6 +63,8 @@ export const documentsApi = {
   delete: (id: string) => apiClient.delete(`/documents/${id}`),
   // Phase 8 — Explainability
   getExplanation: (id: string) => apiClient.get(`/documents/${id}/explanation`),
+  // Demo: wipe uploaded docs (DOC-101+) so each session restarts from DOC-101
+  demoReset: () => apiClient.post('/documents/demo-reset'),
 }
 
 // Vendors

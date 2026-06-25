@@ -48,6 +48,9 @@ from app.models.models import (
     Contract, LeaseContract, Asset, Employee, Budget,
     ApprovalRule, ValidationProfile, ValidationRule,
     Configuration, UserRole, POStatus, GRNStatus,
+    Document, WorkflowState, Approval, Exception as DocException, MatchingResult,
+    DocumentStatus, BusinessProfile, ProcessingStage, ApprovalStatus,
+    ExceptionStatus, ExceptionSeverity, ExceptionQueue, MatchStatus,
 )
 
 # Ensure seed/ directory is importable (handles docker exec and direct invocation)
@@ -97,6 +100,7 @@ def seed_all():
         seed_approval_rules(db, users)
         seed_validation_profiles(db)
         seed_configurations(db)
+        docs = seed_documents(db, vendors, pos, users)
 
         db.commit()
         print("✅ Seed complete!")
@@ -107,6 +111,7 @@ def seed_all():
         print(f"   Lease Contracts: {len(leases)}")
         print(f"   Assets: {len(assets)}")
         print(f"   Employees: {len(employees)}")
+        print(f"   Documents (static demo): {docs}")
 
     except Exception as e:
         db.rollback()
@@ -114,6 +119,193 @@ def seed_all():
         raise
     finally:
         db.close()
+
+
+_PIPELINE_STAGES = [
+    (ProcessingStage.INTAKE, "INTAKE_AGENT"),
+    (ProcessingStage.DOCUMENT_CLASSIFICATION, "CLASSIFIER_AGENT"),
+    (ProcessingStage.OCR, "OCR_AGENT"),
+    (ProcessingStage.EXTRACTION, "EXTRACTION_AGENT"),
+    (ProcessingStage.UNIVERSAL_VALIDATION, "VALIDATION_AGENT"),
+    (ProcessingStage.BUSINESS_PROFILE_PREDICTION, "PROFILER_AGENT"),
+    (ProcessingStage.PROFILE_VALIDATION, "PROFILE_VALIDATOR"),
+    (ProcessingStage.MATCHING, "MATCHING_AGENT"),
+    (ProcessingStage.APPROVAL, "APPROVAL_AGENT"),
+    (ProcessingStage.ERP_POSTING, "ERP_AGENT"),
+    (ProcessingStage.PAYMENT_SCHEDULING, "PAYMENT_AGENT"),
+    (ProcessingStage.COMPLETED, "ORCHESTRATOR"),
+]
+
+
+def _wf_for_status(status: str):
+    """Return (current_stage, progress_percent, reached_count) for a document status."""
+    if status in (DocumentStatus.COMPLETED, DocumentStatus.POSTED):
+        return ProcessingStage.COMPLETED, 100, len(_PIPELINE_STAGES)
+    if status == DocumentStatus.APPROVED:
+        return ProcessingStage.ERP_POSTING, 90, 10
+    if status == DocumentStatus.PENDING_APPROVAL:
+        return ProcessingStage.APPROVAL, 80, 8
+    if status in (DocumentStatus.EXCEPTION, DocumentStatus.HUMAN_REVIEW_REQUIRED):
+        return ProcessingStage.EXCEPTION, 55, 5
+    return ProcessingStage.EXTRACTION, 35, 3
+
+
+def _stage_history(reached: int, start):
+    from datetime import timedelta
+    hist = []
+    t = start
+    for idx, (stage, agent) in enumerate(_PIPELINE_STAGES):
+        if idx < reached:
+            st = "COMPLETED"
+        elif idx == reached:
+            st = "RUNNING"
+        else:
+            break
+        hist.append({
+            "stage": stage,
+            "agent": agent,
+            "started_at": t.isoformat(),
+            "completed_at": (t + timedelta(seconds=20)).isoformat() if st == "COMPLETED" else None,
+            "status": st,
+            "progress_percent": int((idx + 1) / len(_PIPELINE_STAGES) * 100),
+        })
+        t = t + timedelta(seconds=25)
+    return hist
+
+
+def seed_documents(db: Session, vendors: list, pos: list, users: list) -> int:
+    """Seed 100 STATIC demo documents (DOC-1..DOC-100) with deterministic amounts,
+    a spread of statuses, and related approvals/exceptions/matching/workflow rows.
+    Pending approvals are assigned to the System Admin (users[0]). Idempotent."""
+    from datetime import datetime, timezone, timedelta
+
+    if db.query(Document).count() > 0:
+        print("  Documents already exist — skipping document seed.")
+        return db.query(Document).count()
+
+    admin = users[0]
+    now = datetime.now(timezone.utc)
+
+    PROFILES = [
+        BusinessProfile.PO_RAW_MATERIAL, BusinessProfile.NON_PO_RAW_MATERIAL,
+        BusinessProfile.PO_CAPEX, BusinessProfile.NON_PO_CAPEX,
+        BusinessProfile.PO_OPEX, BusinessProfile.NON_PO_OPEX,
+        BusinessProfile.LEASE_RENT, BusinessProfile.EMPLOYEE_REIMBURSEMENT,
+        BusinessProfile.PETTY_CASH,
+    ]
+    PO_PROFILES = {BusinessProfile.PO_RAW_MATERIAL, BusinessProfile.PO_CAPEX, BusinessProfile.PO_OPEX}
+    SOURCES = ["PORTAL", "EMAIL", "PORTAL", "API"]
+    EXC_TYPES = [
+        ("PRICE_MISMATCH", "Price Mismatch", ExceptionSeverity.HIGH, ExceptionQueue.AP_TEAM, "Invoice unit price exceeds PO price beyond tolerance."),
+        ("QTY_MISMATCH", "Quantity Mismatch", ExceptionSeverity.MEDIUM, ExceptionQueue.WAREHOUSE, "Received quantity differs from invoiced quantity."),
+        ("MISSING_PO", "Missing PO Reference", ExceptionSeverity.HIGH, ExceptionQueue.PROCUREMENT, "No matching purchase order could be found."),
+        ("TAX_MISMATCH", "Tax Mismatch", ExceptionSeverity.LOW, ExceptionQueue.FINANCE, "GST amount does not reconcile with line items."),
+        ("DUPLICATE", "Possible Duplicate", ExceptionSeverity.CRITICAL, ExceptionQueue.COMPLIANCE, "Potential duplicate invoice detected."),
+    ]
+
+    plan = (
+        [DocumentStatus.COMPLETED] * 30 +
+        [DocumentStatus.POSTED] * 10 +
+        [DocumentStatus.APPROVED] * 8 +
+        [DocumentStatus.PENDING_APPROVAL] * 20 +
+        [DocumentStatus.EXCEPTION] * 15 +
+        [DocumentStatus.HUMAN_REVIEW_REQUIRED] * 10 +
+        [DocumentStatus.PROCESSING] * 7
+    )
+
+    count = 0
+    for i in range(1, 101):
+        status = plan[i - 1]
+        profile = PROFILES[i % len(PROFILES)]
+        vendor = vendors[i % len(vendors)] if vendors else None
+        is_po = profile in PO_PROFILES
+        po = pos[i % len(pos)] if (is_po and pos) else None
+
+        base = 25000 + (i * 4137) % 475000           # deterministic 25k..500k
+        invoice_amount = Decimal(base)
+        tax_amount = (invoice_amount * Decimal("0.18")).quantize(Decimal("0.01"))
+        total_amount = invoice_amount + tax_amount
+        created = now - timedelta(days=(i % 30), hours=(i % 12))
+        done = status in (DocumentStatus.COMPLETED, DocumentStatus.POSTED, DocumentStatus.APPROVED)
+
+        doc = Document(
+            document_id=f"DOC-{i}",
+            filename=f"DOC-{i}.pdf",
+            original_filename=f"invoice_{i:04d}.pdf",
+            file_extension="pdf",
+            file_size=120000 + i * 97,
+            mime_type="application/pdf",
+            checksum=f"seed{i:06d}",
+            status=status,
+            doc_type="DIGITAL",
+            business_profile=profile,
+            ai_profile_confidence=Decimal("0.90") + Decimal(i % 9) / Decimal(100),
+            ai_profile_reasoning="Classified by the AI profiler agent (demo data).",
+            vendor_id=(vendor.id if vendor else None),
+            po_id=(po.id if po else None),
+            invoice_number=f"INV-2026-{1000 + i}",
+            invoice_date=created.date(),
+            invoice_amount=invoice_amount,
+            tax_amount=tax_amount,
+            total_amount=total_amount,
+            currency="INR",
+            extracted_data={
+                "invoice_number": f"INV-2026-{1000 + i}",
+                "vendor": (vendor.name if vendor else "Unknown Vendor"),
+                "total": float(total_amount),
+            },
+            ocr_confidence=Decimal("0.95"),
+            ingestion_source=SOURCES[i % len(SOURCES)],
+            uploaded_by=admin.id,
+            processing_started_at=created,
+            processing_completed_at=(created + timedelta(minutes=3) if done else None),
+            overall_confidence_score=Decimal("0.93"),
+            created_at=created,
+        )
+        db.add(doc)
+        db.flush()
+
+        wf_stage, progress, reached = _wf_for_status(status)
+        db.add(WorkflowState(
+            document_id=doc.id,
+            current_stage=wf_stage,
+            current_agent="ORCHESTRATOR",
+            progress_percent=progress,
+            stage_history=_stage_history(reached, created),
+            started_at=created,
+            completed_at=(created + timedelta(minutes=3) if progress >= 100 else None),
+        ))
+
+        if po is not None and status in (DocumentStatus.COMPLETED, DocumentStatus.POSTED, DocumentStatus.APPROVED, DocumentStatus.PENDING_APPROVAL):
+            db.add(MatchingResult(
+                document_id=doc.id, po_id=po.id, match_status=MatchStatus.MATCHED,
+                overall_match_score=Decimal("0.98"), quantity_match=True, price_match=True,
+                tax_match=True, total_match=True, vendor_match=True, tolerance_applied=False,
+                matching_notes="3-way match successful (demo).",
+            ))
+
+        if status == DocumentStatus.PENDING_APPROVAL:
+            db.add(Approval(
+                document_id=doc.id, approval_level=1, approver_id=admin.id,
+                status=ApprovalStatus.PENDING, authority_amount=total_amount,
+                deadline=now + timedelta(days=2), created_at=created,
+            ))
+
+        if status in (DocumentStatus.EXCEPTION, DocumentStatus.HUMAN_REVIEW_REQUIRED):
+            code, title, sev, queue, desc = EXC_TYPES[i % len(EXC_TYPES)]
+            db.add(DocException(
+                document_id=doc.id, exception_code=code, exception_type=code,
+                severity=sev, queue=queue, title=title, description=desc,
+                agent_raised_by="VALIDATION_AGENT", assigned_to=admin.id,
+                status=ExceptionStatus.OPEN, sla_hours=8,
+                sla_deadline=now + timedelta(hours=8), created_at=created,
+            ))
+
+        count += 1
+
+    db.flush()
+    print(f"  ✓ {count} demo documents created (DOC-1..DOC-{count})")
+    return count
 
 
 def seed_gl_codes(db: Session) -> list:
