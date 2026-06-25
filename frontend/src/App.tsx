@@ -24,10 +24,11 @@ const queryClient = new QueryClient({
 
 const theme = createTheme({
   palette: {
-    mode: 'light',
-    primary: { main: '#1976d2', dark: '#115293' },
-    secondary: { main: '#dc004e' },
-    background: { default: '#f4f6f8' },
+    mode: 'dark',
+    primary: { main: '#D4AF37', dark: '#A8862B', light: '#E6C75A', contrastText: '#000000' },
+    secondary: { main: '#FFD700', contrastText: '#000000' },
+    background: { default: '#0d0d0d', paper: '#1a1a1a' },
+    text: { primary: '#F5F5F5', secondary: '#C9A227' },
   },
   typography: {
     fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',

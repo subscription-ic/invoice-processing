@@ -52,13 +52,13 @@ export default function Layout() {
       {/* App Bar */}
       <AppBar
         position="fixed"
-        sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, bgcolor: '#1a237e' }}
+        sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, bgcolor: '#0d0d0d', borderBottom: '1px solid #D4AF37' }}
       >
         <Toolbar>
           <IconButton color="inherit" onClick={toggleSidebar} edge="start" sx={{ mr: 2 }}>
             {sidebarOpen ? <ChevronLeft /> : <MenuIcon />}
           </IconButton>
-          <Typography variant="h6" noWrap sx={{ flexGrow: 1, fontWeight: 700 }}>
+          <Typography variant="h6" noWrap sx={{ flexGrow: 1, fontWeight: 700, color: '#D4AF37' }}>
             AP Automation Platform
           </Typography>
           <Tooltip title="Notifications">
@@ -70,7 +70,7 @@ export default function Layout() {
           </Tooltip>
           <Tooltip title={user?.name}>
             <IconButton color="inherit" onClick={(e) => setAnchorEl(e.currentTarget)}>
-              <Avatar sx={{ width: 32, height: 32, bgcolor: '#ff6f00', fontSize: 14 }}>
+              <Avatar sx={{ width: 32, height: 32, bgcolor: '#D4AF37', color: '#000', fontSize: 14 }}>
                 {user?.name?.[0]?.toUpperCase()}
               </Avatar>
             </IconButton>
@@ -130,9 +130,9 @@ export default function Layout() {
           '& .MuiDrawer-paper': {
             width: DRAWER_WIDTH,
             boxSizing: 'border-box',
-            bgcolor: '#0d1b2a',
+            bgcolor: '#0d0d0d',
             color: 'white',
-            borderRight: 'none',
+            borderRight: '1px solid #2a2a2a',
           },
         }}
       >
@@ -150,12 +150,12 @@ export default function Layout() {
                   onClick={() => navigate(item.path)}
                   sx={{
                     mx: 1, mb: 0.5, borderRadius: 2,
-                    '&.Mui-selected': { bgcolor: '#1976d2', '&:hover': { bgcolor: '#1565c0' } },
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
+                    '&.Mui-selected': { bgcolor: '#D4AF37', color: '#000', '&:hover': { bgcolor: '#E6C75A' } },
+                    '&:hover': { bgcolor: 'rgba(212,175,55,0.12)' },
                     color: 'white',
                   }}
                 >
-                  <ListItemIcon sx={{ color: isActive ? 'white' : 'rgba(255,255,255,0.6)', minWidth: 36 }}>
+                  <ListItemIcon sx={{ color: isActive ? '#000' : 'rgba(212,175,55,0.8)', minWidth: 36 }}>
                     {item.icon}
                   </ListItemIcon>
                   <ListItemText

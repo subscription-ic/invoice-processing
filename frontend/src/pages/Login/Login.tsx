@@ -39,14 +39,14 @@ export default function Login() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #1a237e 0%, #0d47a1 50%, #01579b 100%)',
+        background: 'linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #2a2310 100%)',
       }}
     >
       <Card sx={{ width: 420, borderRadius: 3, boxShadow: 24 }}>
         <CardContent sx={{ p: 4 }}>
           <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <Box sx={{ display: 'inline-flex', p: 2, bgcolor: '#e3f2fd', borderRadius: '50%', mb: 2 }}>
-              <AccountBalance sx={{ fontSize: 40, color: '#1976d2' }} />
+            <Box sx={{ display: 'inline-flex', p: 2, bgcolor: '#1a1a1a', borderRadius: '50%', mb: 2, border: '2px solid #D4AF37' }}>
+              <AccountBalance sx={{ fontSize: 40, color: '#D4AF37' }} />
             </Box>
             <Typography variant="h5" fontWeight={700} gutterBottom>
               AP Automation Platform
