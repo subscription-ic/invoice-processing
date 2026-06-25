@@ -57,7 +57,10 @@ function StatCard({
             {title}
           </Typography>
           <Typography
-            sx={{ fontSize: 36, fontWeight: 800, lineHeight: 1, color, fontVariantNumeric: 'tabular-nums' }}
+            sx={{
+              fontSize: { xs: 22, sm: 26, md: 28 }, fontWeight: 800, lineHeight: 1.15, color,
+              fontVariantNumeric: 'tabular-nums', wordBreak: 'break-word', overflowWrap: 'anywhere',
+            }}
           >
             {value}
           </Typography>

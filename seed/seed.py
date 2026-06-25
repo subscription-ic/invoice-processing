@@ -181,19 +181,60 @@ def seed_documents(db: Session, vendors: list, pos: list, users: list) -> int:
 
     from sqlalchemy import text as _text
 
-    if db.query(Document).filter(Document.document_id == "DOC-1").first():
-        print("  Static demo documents already exist ? skipping.")
+    SEED_VER = "v3-generic-admin"
+    ver_cfg = db.query(Configuration).filter(Configuration.key == "demo_seed_version").first()
+    if ver_cfg and ver_cfg.value == SEED_VER and db.query(Document).filter(Document.document_id == "DOC-1").first():
+        print("  Demo data already at current version - skipping.")
         return db.query(Document).count()
 
-    # Clean slate: remove any pre-existing documents (e.g. stray test uploads) and
-    # their non-cascade child rows, so we get exactly the 100 static demo docs.
+    admin = users[0]
+
+    # Professional naming: replace any personal approver names with role-based labels.
+    role_names = {
+        UserRole.AP_TEAM: "AP Operations",
+        UserRole.FINANCE: "Finance Controller",
+        UserRole.APPROVER: "Approvals Manager",
+        UserRole.PROCUREMENT: "Procurement Lead",
+        UserRole.VIEWER: "Auditor",
+    }
+    for u in db.query(User).filter(User.email != "admin@company.com").all():
+        nm = role_names.get(u.role)
+        if nm:
+            u.name = nm
+
+    # Generic demo vendors (real names get uploaded later by the client).
+    GENERIC_VENDORS = [
+        "ABC Infotech Pvt Ltd", "Apex Industrial Supplies", "Global Trade Corp",
+        "Pinnacle Services Ltd", "Summit Logistics Pvt Ltd", "Orion Manufacturing Co",
+        "Vertex Solutions Pvt Ltd", "Zenith Enterprises", "Meridian Technologies",
+        "Quantum Systems Pvt Ltd", "Stellar Components Ltd", "Nova Distributors",
+        "Crest Engineering Works", "Atlas Traders Pvt Ltd", "Horizon Capital Services",
+    ]
+    _cities = [("Mumbai", "Maharashtra"), ("Bengaluru", "Karnataka"), ("Delhi", "Delhi"),
+               ("Pune", "Maharashtra"), ("Chennai", "Tamil Nadu"), ("Hyderabad", "Telangana")]
+    gen_vendors = []
+    for gi, gname in enumerate(GENERIC_VENDORS):
+        code = f"GEN-{gi + 1:03d}"
+        v = db.query(Vendor).filter(Vendor.vendor_code == code).first()
+        if not v:
+            city, state = _cities[gi % len(_cities)]
+            v = Vendor(vendor_code=code, name=gname, city=city, state=state,
+                       country="India", payment_terms="NET30", vendor_type="GOODS",
+                       currency="INR", is_approved=True)
+            db.add(v)
+            db.flush()
+        else:
+            v.name = gname
+        gen_vendors.append(v)
+
+    # Clean slate: remove any pre-existing documents (e.g. stray uploads) and their
+    # non-cascade child rows, so we get exactly the 100 static demo docs.
     for _t in ["audit_logs", "notifications", "workflow_state_archive", "workflow_timelines",
                "notification_logs", "retry_logs", "exception_resolution_history", "token_usage"]:
         db.execute(_text(f"DELETE FROM {_t}"))
     db.execute(_text("DELETE FROM documents"))
     db.flush()
 
-    admin = users[0]
     now = datetime.now(timezone.utc)
 
     PROFILES = [
@@ -227,7 +268,7 @@ def seed_documents(db: Session, vendors: list, pos: list, users: list) -> int:
     for i in range(1, 101):
         status = plan[i - 1]
         profile = PROFILES[i % len(PROFILES)]
-        vendor = vendors[i % len(vendors)] if vendors else None
+        vendor = gen_vendors[i % len(gen_vendors)]
         is_po = profile in PO_PROFILES
         po = pos[i % len(pos)] if (is_po and pos) else None
 
@@ -314,6 +355,11 @@ def seed_documents(db: Session, vendors: list, pos: list, users: list) -> int:
         count += 1
 
     db.flush()
+    if ver_cfg:
+        ver_cfg.value = SEED_VER
+    else:
+        db.add(Configuration(key="demo_seed_version", value=SEED_VER, category="DEMO",
+                             description="Demo seed data version"))
     db.commit()
     print(f"  - {count} demo documents created (DOC-1..DOC-{count})")
     return count

@@ -155,15 +155,22 @@ class ApprovalAgent(BaseAgent):
         return query.first()
 
     def _resolve_approver(self, level_config: Dict, doc: Document) -> Optional[User]:
+        # All approvals are routed to the System Admin (single professional approver).
+        admin = (
+            self.db.query(User)
+            .filter(User.email == "admin@company.com", User.is_active == True)
+            .first()
+        )
+        if admin:
+            return admin
+
+        # Fallback to matrix-based resolution if the admin user is unavailable.
         user_id = level_config.get("user_id")
         role = level_config.get("role")
-
         if user_id:
             return self.db.query(User).filter(User.id == user_id, User.is_active == True).first()
-
         if role:
             return self.db.query(User).filter(User.role == role, User.is_active == True).first()
-
         return None
 
     def _notify_approver(self, approval: Approval, doc: Document) -> None:
