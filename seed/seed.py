@@ -68,7 +68,7 @@ from seed_erp_from_excel import (  # noqa: E402
 def seed_erp_from_excel(db: Session, users: list) -> tuple:
     """Seed vendors, POs, GRNs from Excel register files. Skips if data exists."""
     if db.query(Vendor).count() > 0:
-        print("  ERP master data already exists — skipping Excel import.")
+        print("  ERP master data already exists ? skipping Excel import.")
         vendor_map = {v.vendor_code: v for v in db.query(Vendor).all()}
         po_map = {p.po_number: p for p in db.query(PurchaseOrder).all()}
         return vendor_map, po_map
@@ -83,7 +83,7 @@ def seed_erp_from_excel(db: Session, users: list) -> tuple:
 def seed_all():
     db = SyncSessionLocal()
     try:
-        print("🌱 Starting seed process...")
+        print("[seed] Starting seed process...")
 
         gl_codes = seed_gl_codes(db)
         cost_centers = seed_cost_centers(db)
@@ -103,7 +103,7 @@ def seed_all():
         docs = seed_documents(db, vendors, pos, users)
 
         db.commit()
-        print("✅ Seed complete!")
+        print("[done] Seed complete!")
         print(f"   Users: {len(users)}")
         print(f"   Vendors: {len(vendors)}")
         print(f"   Purchase Orders: {len(pos)}")
@@ -115,7 +115,7 @@ def seed_all():
 
     except Exception as e:
         db.rollback()
-        print(f"❌ Seed failed: {e}")
+        print(f"[FAIL] Seed failed: {e}")
         raise
     finally:
         db.close()
@@ -182,7 +182,7 @@ def seed_documents(db: Session, vendors: list, pos: list, users: list) -> int:
     from sqlalchemy import text as _text
 
     if db.query(Document).filter(Document.document_id == "DOC-1").first():
-        print("  Static demo documents already exist — skipping.")
+        print("  Static demo documents already exist ? skipping.")
         return db.query(Document).count()
 
     # Clean slate: remove any pre-existing documents (e.g. stray test uploads) and
@@ -314,7 +314,8 @@ def seed_documents(db: Session, vendors: list, pos: list, users: list) -> int:
         count += 1
 
     db.flush()
-    print(f"  ✓ {count} demo documents created (DOC-1..DOC-{count})")
+    db.commit()
+    print(f"  - {count} demo documents created (DOC-1..DOC-{count})")
     return count
 
 
@@ -352,7 +353,7 @@ def seed_gl_codes(db: Session) -> list:
         db.add(gl)
         codes.append(gl)
     db.flush()
-    print(f"  ✓ {len(codes)} GL codes created")
+    print(f"  - {len(codes)} GL codes created")
     return codes
 
 
@@ -378,7 +379,7 @@ def seed_cost_centers(db: Session) -> list:
         db.add(cc)
         centers.append(cc)
     db.flush()
-    print(f"  ✓ {len(centers)} cost centers created")
+    print(f"  - {len(centers)} cost centers created")
     return centers
 
 
@@ -401,7 +402,7 @@ def seed_users(db: Session) -> list:
         db.add(u)
         users.append(u)
     db.flush()
-    print(f"  ✓ {len(users)} users created")
+    print(f"  - {len(users)} users created")
     return users
 
 
@@ -459,7 +460,7 @@ def seed_vendors(db: Session) -> list:
         db.add(contact)
 
     db.flush()
-    print(f"  ✓ {len(vendors)} vendors created")
+    print(f"  - {len(vendors)} vendors created")
     return vendors
 
 
@@ -553,7 +554,7 @@ def seed_purchase_orders(db: Session, vendors, cost_centers, gl_codes, users) ->
         pos.append(po)
 
     db.flush()
-    print(f"  ✓ {len(pos)} purchase orders created")
+    print(f"  - {len(pos)} purchase orders created")
     return pos, all_lines
 
 
@@ -603,7 +604,7 @@ def seed_grns(db: Session, pos, po_lines, vendors, users) -> list:
         grns.append(grn)
 
     db.flush()
-    print(f"  ✓ {len(grns)} GRNs created")
+    print(f"  - {len(grns)} GRNs created")
     return grns
 
 
@@ -647,7 +648,7 @@ def seed_contracts(db: Session, vendors, cost_centers, gl_codes, users) -> list:
         contracts.append(c)
 
     db.flush()
-    print(f"  ✓ {len(contracts)} contracts created")
+    print(f"  - {len(contracts)} contracts created")
     return contracts
 
 
@@ -698,7 +699,7 @@ def seed_lease_contracts(db: Session, vendors, cost_centers, gl_codes) -> list:
         leases.append(l)
 
     db.flush()
-    print(f"  ✓ {len(leases)} lease contracts created")
+    print(f"  - {len(leases)} lease contracts created")
     return leases
 
 
@@ -753,7 +754,7 @@ def seed_assets(db: Session, vendors, cost_centers, gl_codes) -> list:
         assets.append(a)
 
     db.flush()
-    print(f"  ✓ {len(assets)} assets created")
+    print(f"  - {len(assets)} assets created")
     return assets
 
 
@@ -800,7 +801,7 @@ def seed_employees(db: Session, cost_centers, users) -> list:
         employees.append(e)
 
     db.flush()
-    print(f"  ✓ {len(employees)} employees created")
+    print(f"  - {len(employees)} employees created")
     return employees
 
 
@@ -836,7 +837,7 @@ def seed_budgets(db: Session, cost_centers, gl_codes) -> None:
         db.add(b)
 
     db.flush()
-    print("  ✓ 10 budgets created")
+    print("  - 10 budgets created")
 
 
 def seed_approval_rules(db: Session, users) -> None:
@@ -915,7 +916,7 @@ def seed_approval_rules(db: Session, users) -> None:
         db.add(rule)
 
     db.flush()
-    print(f"  ✓ {len(rules)} approval rules created")
+    print(f"  - {len(rules)} approval rules created")
 
 
 def seed_validation_profiles(db: Session) -> None:
@@ -1028,7 +1029,7 @@ def seed_validation_profiles(db: Session) -> None:
             db.add(rule)
 
     db.flush()
-    print(f"  ✓ {len(profiles)} validation profiles created")
+    print(f"  - {len(profiles)} validation profiles created")
 
 
 def seed_configurations(db: Session) -> None:
@@ -1056,7 +1057,7 @@ def seed_configurations(db: Session) -> None:
         db.add(c)
 
     db.flush()
-    print(f"  ✓ {len(configs)} configurations created")
+    print(f"  - {len(configs)} configurations created")
 
 
 if __name__ == "__main__":

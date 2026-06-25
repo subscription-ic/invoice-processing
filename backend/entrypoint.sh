@@ -9,4 +9,9 @@ if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
   alembic upgrade head || echo "[entrypoint] WARNING: alembic upgrade failed — continuing startup"
 fi
 
+if [ "${SEED_DEMO:-false}" = "true" ]; then
+  echo "[entrypoint] Seeding demo data (python seed/seed.py)..."
+  python /app/seed/seed.py || echo "[entrypoint] WARNING: seed failed — continuing startup"
+fi
+
 exec "$@"
