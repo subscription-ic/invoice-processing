@@ -35,20 +35,20 @@ import type { Document, Exception, ValidationResult, MatchingResult, DashboardSt
 
 // ─── Colour tokens ───────────────────────────────────────────────────────────
 const C = {
-  navy:     '#0A1628',
-  navyMid:  '#0F2040',
-  navyCard: '#162035',
-  blue:     '#3B7EF4',
-  blueHov:  '#2C6DE0',
-  green:    '#10B981',
-  amber:    '#F59E0B',
+  navy:     '#0d0d0d',
+  navyMid:  '#15130c',
+  navyCard: '#1a1a1a',
+  blue:     '#d4af37',
+  blueHov:  '#c9a227',
+  green:    '#c9a227',
+  amber:    '#d4af37',
   red:      '#EF4444',
-  purple:   '#8B5CF6',
-  text:     '#F1F5F9',
+  purple:   '#a8862b',
+  text:     '#e0e0e0',
   textDim:  '#94A3B8',
   border:   'rgba(255,255,255,0.07)',
-  surface:  '#F8FAFC',
-  card:     '#FFFFFF',
+  surface:  '#ffffff',
+  card:     '#ffffff',
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -288,7 +288,7 @@ function ExceptionDetail({
               </Box>
             )}
           </Box>
-          <Typography sx={{ fontSize: 14, fontWeight: 700, color: '#0F172A', lineHeight: 1.3 }}>
+          <Typography sx={{ fontSize: 14, fontWeight: 700, color: '#0d0d0d', lineHeight: 1.3 }}>
             {exc.title}
           </Typography>
           <Typography sx={{ fontSize: 11, color: '#64748B', mt: 0.3 }}>
@@ -299,11 +299,11 @@ function ExceptionDetail({
 
       {/* AI Description */}
       {exc.description && (
-        <Box sx={{ bgcolor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', p: 2, mb: 2 }}>
+        <Box sx={{ bgcolor: '#ffffff', border: '1px solid #e0e0e0', borderRadius: '10px', p: 2, mb: 2 }}>
           <Typography sx={{ fontSize: 11, color: '#64748B', fontWeight: 700, letterSpacing: 0.6, mb: 0.5 }}>
             AI ANALYSIS
           </Typography>
-          <Typography sx={{ fontSize: 13, color: '#1E293B', lineHeight: 1.6 }}>
+          <Typography sx={{ fontSize: 13, color: '#1a1a1a', lineHeight: 1.6 }}>
             {exc.description}
           </Typography>
         </Box>
@@ -339,7 +339,7 @@ function ExceptionDetail({
           <Box sx={{ overflowX: 'auto', mt: 1 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
-                <tr style={{ background: '#F1F5F9' }}>
+                <tr style={{ background: '#e0e0e0' }}>
                   {['Line', 'PO Qty', 'Inv Qty', 'PO Price', 'Inv Price', 'Variance', 'Status'].map(h => (
                     <th key={h} style={{ padding: '6px 10px', textAlign: 'left', color: '#64748B', fontWeight: 700, fontSize: 10, letterSpacing: 0.5 }}>{h}</th>
                   ))}
@@ -355,12 +355,12 @@ function ExceptionDetail({
                   const varPct   = poPrice ? ((varAmt / poPrice) * 100) : 0
                   const mismatch = !lm.price_ok
                   return (
-                    <tr key={i} style={{ borderBottom: '1px solid #F1F5F9', background: mismatch ? 'rgba(239,68,68,0.04)' : 'white' }}>
+                    <tr key={i} style={{ borderBottom: '1px solid #e0e0e0', background: mismatch ? 'rgba(239,68,68,0.04)' : 'white' }}>
                       <td style={{ padding: '7px 10px', fontWeight: 600 }}>#{lm.line_number}</td>
                       <td style={{ padding: '7px 10px' }}>{poQty}</td>
-                      <td style={{ padding: '7px 10px', color: lm.qty_ok ? '#1E293B' : C.red, fontWeight: lm.qty_ok ? 400 : 700 }}>{invQty}</td>
+                      <td style={{ padding: '7px 10px', color: lm.qty_ok ? '#1a1a1a' : C.red, fontWeight: lm.qty_ok ? 400 : 700 }}>{invQty}</td>
                       <td style={{ padding: '7px 10px' }}>{fmt(poPrice)}</td>
-                      <td style={{ padding: '7px 10px', color: mismatch ? C.red : '#1E293B', fontWeight: mismatch ? 700 : 400 }}>{fmt(invPrice)}</td>
+                      <td style={{ padding: '7px 10px', color: mismatch ? C.red : '#1a1a1a', fontWeight: mismatch ? 700 : 400 }}>{fmt(invPrice)}</td>
                       <td style={{ padding: '7px 10px' }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                           {varAmt > 0 ? <TrendingUp sx={{ fontSize: 13, color: C.red }} /> : varAmt < 0 ? <TrendingDown sx={{ fontSize: 13, color: C.green }} /> : <FlatIcon sx={{ fontSize: 13, color: C.textDim }} />}
@@ -404,7 +404,7 @@ function ExceptionDetail({
         <Box sx={{ mb: 2 }}>
           <SectionLabel icon={<FindInPage sx={{ fontSize: 13 }} />} label="PURCHASE ORDER LOOKUP" />
           <Box sx={{ bgcolor: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '10px', p: 2, mt: 1 }}>
-            <Typography sx={{ fontSize: 12, color: '#1E293B', lineHeight: 1.6 }}>
+            <Typography sx={{ fontSize: 12, color: '#1a1a1a', lineHeight: 1.6 }}>
               No matching Purchase Order was found for this invoice.
             </Typography>
             <Box sx={{ mt: 1.5, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
@@ -443,7 +443,7 @@ function ExceptionDetail({
                     color: r.status === 'FAIL' ? C.red : C.amber,
                     bgcolor: r.status === 'FAIL' ? 'rgba(239,68,68,0.12)' : 'rgba(245,158,11,0.12)',
                   }}>{r.status}</Box>
-                  <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#0F172A' }}>
+                  <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#0d0d0d' }}>
                     {r.rule_name ?? r.rule_code}
                   </Typography>
                 </Box>
@@ -467,12 +467,12 @@ function ExceptionDetail({
 
       {/* ── RESOLVE ── */}
       {exc.status !== 'RESOLVED' && exc.status !== 'CLOSED' && (
-        <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid #F1F5F9' }}>
+        <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid #e0e0e0' }}>
           <Button
             variant="contained"
             size="small"
             onClick={() => setShowResolve(true)}
-            sx={{ bgcolor: C.green, '&:hover': { bgcolor: '#0DA271' }, textTransform: 'none', fontWeight: 700 }}
+            sx={{ bgcolor: C.green, '&:hover': { bgcolor: '#a8862b' }, textTransform: 'none', fontWeight: 700 }}
           >
             Mark as Resolved
           </Button>
@@ -497,7 +497,7 @@ function ExceptionDetail({
             variant="contained"
             onClick={() => resolveMut.mutate()}
             disabled={resolveMut.isPending || !notes.trim()}
-            sx={{ bgcolor: C.green, '&:hover': { bgcolor: '#0DA271' } }}
+            sx={{ bgcolor: C.green, '&:hover': { bgcolor: '#a8862b' } }}
           >
             {resolveMut.isPending ? 'Saving…' : 'Confirm Resolve'}
           </Button>
@@ -521,16 +521,16 @@ function InfoRow({ label, value, alert: isAlert }: { label: string; value?: stri
   return (
     <Box>
       <Typography sx={{ fontSize: 10, color: '#94A3B8', fontWeight: 600 }}>{label}</Typography>
-      <Typography sx={{ fontSize: 12, fontWeight: 700, color: isAlert ? C.red : '#1E293B' }}>{value ?? '—'}</Typography>
+      <Typography sx={{ fontSize: 12, fontWeight: 700, color: isAlert ? C.red : '#1a1a1a' }}>{value ?? '—'}</Typography>
     </Box>
   )
 }
 
 function StatMini({ label, value, alert }: { label: string; value: string; alert?: boolean }) {
   return (
-    <Box sx={{ bgcolor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', p: 1.5 }}>
+    <Box sx={{ bgcolor: '#ffffff', border: '1px solid #e0e0e0', borderRadius: '8px', p: 1.5 }}>
       <Typography sx={{ fontSize: 10, color: '#64748B', fontWeight: 600 }}>{label}</Typography>
-      <Typography sx={{ fontSize: 13, fontWeight: 700, color: alert ? C.red : '#0F172A', mt: 0.3 }}>{value}</Typography>
+      <Typography sx={{ fontSize: 13, fontWeight: 700, color: alert ? C.red : '#0d0d0d', mt: 0.3 }}>{value}</Typography>
     </Box>
   )
 }
@@ -538,7 +538,7 @@ function StatMini({ label, value, alert }: { label: string; value: string; alert
 function CompareCard({ title, children, highlight, color }: { title: string; children: React.ReactNode; highlight?: boolean; color: string }) {
   return (
     <Box sx={{
-      border: `1.5px solid ${highlight ? color : '#E2E8F0'}`,
+      border: `1.5px solid ${highlight ? color : '#e0e0e0'}`,
       borderRadius: '10px', p: 1.5,
       bgcolor: highlight ? `${color}08` : 'white',
     }}>
@@ -554,7 +554,7 @@ function CompareRow({ label, value }: { label: string; value?: string }) {
   return (
     <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
       <Typography sx={{ fontSize: 11, color: '#94A3B8' }}>{label}</Typography>
-      <Typography sx={{ fontSize: 11, fontWeight: 600, color: '#1E293B', textAlign: 'right' }}>{value ?? '—'}</Typography>
+      <Typography sx={{ fontSize: 11, fontWeight: 600, color: '#1a1a1a', textAlign: 'right' }}>{value ?? '—'}</Typography>
     </Box>
   )
 }
@@ -633,12 +633,12 @@ function DocPanel({ docId, onClose }: { docId: string; onClose: () => void }) {
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'white' }}>
       {/* Panel header */}
-      <Box sx={{ px: 2.5, pt: 2.5, pb: 0, borderBottom: '1px solid #F1F5F9' }}>
+      <Box sx={{ px: 2.5, pt: 2.5, pb: 0, borderBottom: '1px solid #e0e0e0' }}>
         <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1.5 }}>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             {loadDoc ? <Skeleton width={180} height={20} /> : (
               <>
-                <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#0F172A', mb: 0.3, fontFamily: 'monospace' }}>
+                <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#0d0d0d', mb: 0.3, fontFamily: 'monospace' }}>
                   {doc?.document_id}
                 </Typography>
                 <Typography sx={{ fontSize: 12, color: '#64748B' }} noWrap>
@@ -657,7 +657,7 @@ function DocPanel({ docId, onClose }: { docId: string; onClose: () => void }) {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 1.5 }}>
             <StatusBadge status={doc.status} />
             {doc.total_amount != null && (
-              <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>{fmt(doc.total_amount)}</Typography>
+              <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#0d0d0d' }}>{fmt(doc.total_amount)}</Typography>
             )}
             {doc.vendor_name && (
               <Typography sx={{ fontSize: 12, color: '#64748B' }}>· {doc.vendor_name}</Typography>
@@ -755,16 +755,16 @@ function OverviewTab({ doc, workflow }: { doc: Document; workflow?: { stage_hist
   return (
     <Box>
       {doc.ai_profile_reasoning && (
-        <Box sx={{ bgcolor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', p: 2, mb: 2.5 }}>
+        <Box sx={{ bgcolor: '#ffffff', border: '1px solid #e0e0e0', borderRadius: '10px', p: 2, mb: 2.5 }}>
           <Typography sx={{ fontSize: 10, fontWeight: 800, color: '#64748B', letterSpacing: 0.6, mb: 0.5 }}>AI REASONING</Typography>
-          <Typography sx={{ fontSize: 12, color: '#1E293B', lineHeight: 1.6 }}>{doc.ai_profile_reasoning}</Typography>
+          <Typography sx={{ fontSize: 12, color: '#1a1a1a', lineHeight: 1.6 }}>{doc.ai_profile_reasoning}</Typography>
         </Box>
       )}
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
         {fields.map(f => (
-          <Box key={f.label} sx={{ py: 1.2, px: 0.5, borderBottom: '1px solid #F8FAFC' }}>
+          <Box key={f.label} sx={{ py: 1.2, px: 0.5, borderBottom: '1px solid #ffffff' }}>
             <Typography sx={{ fontSize: 10, color: '#94A3B8', fontWeight: 600, mb: 0.2 }}>{f.label}</Typography>
-            <Typography sx={{ fontSize: 12, fontWeight: f.bold ? 700 : 500, color: '#1E293B' }}>{f.value ?? '—'}</Typography>
+            <Typography sx={{ fontSize: 12, fontWeight: f.bold ? 700 : 500, color: '#1a1a1a' }}>{f.value ?? '—'}</Typography>
           </Box>
         ))}
       </Box>
@@ -774,7 +774,7 @@ function OverviewTab({ doc, workflow }: { doc: Document; workflow?: { stage_hist
           <Box sx={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
-                <tr style={{ background: '#F8FAFC' }}>
+                <tr style={{ background: '#ffffff' }}>
                   {['#', 'Description', 'Qty', 'Unit Price', 'Total'].map(h => (
                     <th key={h} style={{ padding: '6px 8px', textAlign: 'left', color: '#64748B', fontWeight: 700, fontSize: 10 }}>{h}</th>
                   ))}
@@ -782,7 +782,7 @@ function OverviewTab({ doc, workflow }: { doc: Document; workflow?: { stage_hist
               </thead>
               <tbody>
                 {doc.line_items.map(li => (
-                  <tr key={li.id} style={{ borderBottom: '1px solid #F8FAFC' }}>
+                  <tr key={li.id} style={{ borderBottom: '1px solid #ffffff' }}>
                     <td style={{ padding: '6px 8px', color: '#94A3B8' }}>{li.line_number}</td>
                     <td style={{ padding: '6px 8px' }}>{li.description ?? '—'}</td>
                     <td style={{ padding: '6px 8px' }}>{li.quantity ?? '—'}</td>
@@ -820,11 +820,11 @@ function MatchingTab({ matching }: { matching: MatchingResult }) {
             sx={{ color: score >= 90 ? C.green : score >= 70 ? C.amber : C.red }}
           />
           <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Typography sx={{ fontSize: 16, fontWeight: 800, color: '#0F172A' }}>{score}%</Typography>
+            <Typography sx={{ fontSize: 16, fontWeight: 800, color: '#0d0d0d' }}>{score}%</Typography>
           </Box>
         </Box>
         <Box>
-          <Typography sx={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>Match Score</Typography>
+          <Typography sx={{ fontSize: 14, fontWeight: 700, color: '#0d0d0d' }}>Match Score</Typography>
           <StatusBadge status={matching.match_status} />
           {matching.tolerance_applied && (
             <Typography sx={{ fontSize: 11, color: C.amber, mt: 0.5 }}>Tolerance applied</Typography>
@@ -833,7 +833,7 @@ function MatchingTab({ matching }: { matching: MatchingResult }) {
       </Box>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.8, mb: 2 }}>
         {checks.map(c => (
-          <Box key={c.label} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 1.5, py: 1, borderRadius: '8px', bgcolor: '#F8FAFC' }}>
+          <Box key={c.label} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 1.5, py: 1, borderRadius: '8px', bgcolor: '#ffffff' }}>
             <Typography sx={{ fontSize: 12, color: '#475569' }}>{c.label}</Typography>
             {c.ok == null ? <Box sx={{ fontSize: 10, color: '#94A3B8' }}>N/A</Box> : c.ok
               ? <CheckCircle sx={{ fontSize: 16, color: C.green }} />
@@ -851,7 +851,7 @@ function MatchingTab({ matching }: { matching: MatchingResult }) {
         </Box>
       )}
       {matching.matching_notes && (
-        <Box sx={{ mt: 2, p: 1.5, bgcolor: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+        <Box sx={{ mt: 2, p: 1.5, bgcolor: '#ffffff', borderRadius: '8px', border: '1px solid #e0e0e0' }}>
           <Typography sx={{ fontSize: 12, color: '#475569', lineHeight: 1.6 }}>{matching.matching_notes}</Typography>
         </Box>
       )}
@@ -879,8 +879,8 @@ function ValidationTab({ rules }: { rules: ValidationResult[] }) {
         {rules.map(r => (
           <Box key={r.id} sx={{
             display: 'flex', alignItems: 'flex-start', gap: 1.5, p: 1.5, borderRadius: '9px',
-            bgcolor: r.status === 'PASS' ? 'rgba(16,185,129,0.04)' : r.status === 'FAIL' ? 'rgba(239,68,68,0.04)' : r.status === 'WARNING' ? 'rgba(245,158,11,0.04)' : '#F8FAFC',
-            border: `1px solid ${r.status === 'PASS' ? 'rgba(16,185,129,0.15)' : r.status === 'FAIL' ? 'rgba(239,68,68,0.15)' : r.status === 'WARNING' ? 'rgba(245,158,11,0.15)' : '#E2E8F0'}`,
+            bgcolor: r.status === 'PASS' ? 'rgba(16,185,129,0.04)' : r.status === 'FAIL' ? 'rgba(239,68,68,0.04)' : r.status === 'WARNING' ? 'rgba(245,158,11,0.04)' : '#ffffff',
+            border: `1px solid ${r.status === 'PASS' ? 'rgba(16,185,129,0.15)' : r.status === 'FAIL' ? 'rgba(239,68,68,0.15)' : r.status === 'WARNING' ? 'rgba(245,158,11,0.15)' : '#e0e0e0'}`,
           }}>
             <Box sx={{ mt: 0.2, flexShrink: 0 }}>
               {r.status === 'PASS'    ? <CheckCircle sx={{ fontSize: 15, color: C.green }} /> :
@@ -889,12 +889,12 @@ function ValidationTab({ rules }: { rules: ValidationResult[] }) {
                                         <HourglassEmpty sx={{ fontSize: 15, color: '#94A3B8' }} />}
             </Box>
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography sx={{ fontSize: 12, fontWeight: 600, color: '#1E293B' }}>{r.rule_name ?? r.rule_code}</Typography>
+              <Typography sx={{ fontSize: 12, fontWeight: 600, color: '#1a1a1a' }}>{r.rule_name ?? r.rule_code}</Typography>
               {r.reason && <Typography sx={{ fontSize: 11, color: '#64748B', mt: 0.3 }}>{r.reason}</Typography>}
               {(r.expected_value || r.actual_value) && (
                 <Box sx={{ display: 'flex', gap: 2, mt: 0.5, flexWrap: 'wrap' }}>
                   {r.expected_value && <Box><Typography sx={{ fontSize: 9, color: '#94A3B8', fontWeight: 700 }}>EXPECTED</Typography><Typography sx={{ fontSize: 11 }}>{r.expected_value}</Typography></Box>}
-                  {r.actual_value   && <Box><Typography sx={{ fontSize: 9, color: '#94A3B8', fontWeight: 700 }}>ACTUAL</Typography><Typography sx={{ fontSize: 11, color: r.status === 'FAIL' ? C.red : '#1E293B', fontWeight: 700 }}>{r.actual_value}</Typography></Box>}
+                  {r.actual_value   && <Box><Typography sx={{ fontSize: 9, color: '#94A3B8', fontWeight: 700 }}>ACTUAL</Typography><Typography sx={{ fontSize: 11, color: r.status === 'FAIL' ? C.red : '#1a1a1a', fontWeight: 700 }}>{r.actual_value}</Typography></Box>}
                 </Box>
               )}
             </Box>
@@ -1024,7 +1024,7 @@ export default function InvoiceHub({ embedded = false }: { embedded?: boolean })
 
           <Menu anchorEl={notifAnchor} open={Boolean(notifAnchor)} onClose={() => setNotifAnchor(null)}
             PaperProps={{ sx: { width: 340, maxHeight: 380, borderRadius: '12px', mt: 1 } }}>
-            <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid #F1F5F9' }}>
+            <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid #e0e0e0' }}>
               <Typography sx={{ fontWeight: 700, fontSize: 13 }}>Notifications</Typography>
             </Box>
             {notifications.slice(0, 8).map(n => (

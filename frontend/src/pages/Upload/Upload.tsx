@@ -150,23 +150,23 @@ export default function Upload() {
       </Box>
 
       {/* Drop Zone */}
-      <Card elevation={0} sx={{ mb: 3, border: '1px solid #e8eaed', borderRadius: 2 }}>
+      <Card elevation={0} sx={{ mb: 3, border: '1px solid #e0e0e0', borderRadius: 2 }}>
         <CardContent>
           <Box
             {...getRootProps()}
             sx={{
-              border: `2px dashed ${isDragActive ? '#1565c0' : '#d0d5dd'}`,
+              border: `2px dashed ${isDragActive ? '#a8862b' : '#e0e0e0'}`,
               borderRadius: 2,
               p: { xs: 4, md: 7 },
               textAlign: 'center',
               cursor: 'pointer',
-              bgcolor: isDragActive ? '#e8f0fe' : 'background.paper',
+              bgcolor: isDragActive ? '#ffffff' : 'background.paper',
               transition: 'all 0.2s',
-              '&:hover': { borderColor: '#1565c0', bgcolor: '#f8faff' },
+              '&:hover': { borderColor: '#a8862b', bgcolor: '#ffffff' },
             }}
           >
             <input {...getInputProps()} />
-            <CloudUpload sx={{ fontSize: 56, color: isDragActive ? '#1565c0' : '#bbb', mb: 2 }} />
+            <CloudUpload sx={{ fontSize: 56, color: isDragActive ? '#a8862b' : '#e0e0e0', mb: 2 }} />
             <Typography variant="h6" fontWeight={700} gutterBottom>
               {isDragActive ? 'Drop files here' : 'Drag & Drop or click to select'}
             </Typography>
@@ -179,9 +179,9 @@ export default function Upload() {
       </Card>
 
       {/* AI pipeline info */}
-      <Card elevation={0} sx={{ mb: 3, bgcolor: '#f0f4ff', border: '1px solid #c7d7fc', borderRadius: 2 }}>
+      <Card elevation={0} sx={{ mb: 3, bgcolor: '#ffffff', border: '1px solid #ead18a', borderRadius: 2 }}>
         <CardContent sx={{ py: '12px !important' }}>
-          <Typography variant="body2" color="#1565c0" fontWeight={600} gutterBottom>
+          <Typography variant="body2" color="#a8862b" fontWeight={600} gutterBottom>
             AI Pipeline
           </Typography>
           <Typography variant="caption" color="text.secondary">
@@ -193,7 +193,7 @@ export default function Upload() {
 
       {/* File Queue */}
       {files.length > 0 && (
-        <Card elevation={0} sx={{ border: '1px solid #e8eaed', borderRadius: 2 }}>
+        <Card elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 2 }}>
           <CardContent>
             {/* Queue header */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>

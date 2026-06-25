@@ -95,7 +95,7 @@ export default function Audit() {
           </Box>
           <Table size="small">
             <TableHead>
-              <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+              <TableRow sx={{ bgcolor: '#ffffff' }}>
                 <TableCell>Timestamp</TableCell>
                 <TableCell>Action</TableCell>
                 <TableCell>Entity</TableCell>
@@ -106,7 +106,7 @@ export default function Audit() {
             </TableHead>
             <TableBody>
               {auditLogs.map((log: any, idx: number) => (
-                <TableRow key={log.id || idx} sx={{ '&:hover': { bgcolor: '#f9f9f9' } }}>
+                <TableRow key={log.id || idx} sx={{ '&:hover': { bgcolor: '#ffffff' } }}>
                   <TableCell>
                     <Typography variant="caption">
                       {new Date(log.timestamp).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'medium' })}
@@ -133,7 +133,7 @@ export default function Audit() {
                   <TableCell>
                     {log.after_state && (
                       <Tooltip title={JSON.stringify(log.after_state, null, 2)} placement="left">
-                        <Box component="pre" sx={{ fontSize: 10, maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer', bgcolor: '#f5f5f5', p: 0.5, borderRadius: 1 }}>
+                        <Box component="pre" sx={{ fontSize: 10, maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer', bgcolor: '#ffffff', p: 0.5, borderRadius: 1 }}>
                           {JSON.stringify(log.after_state)}
                         </Box>
                       </Tooltip>

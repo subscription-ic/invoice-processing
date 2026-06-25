@@ -226,10 +226,10 @@ export default function Admin() {
 
       {/* Stats strip */}
       <Stack direction="row" spacing={2} sx={{ mb: 2, flexWrap: 'wrap', gap: 1 }}>
-        <StatCard icon={<StoreMallDirectory fontSize="inherit" />} label="Vendors" value={vendors.length || (tab !== 0 ? '—' : 0)} color="#1976d2" />
-        <StatCard icon={<ReceiptLong fontSize="inherit" />} label="Purchase Orders" value={pos.length || (tab !== 1 ? '—' : 0)} color="#388e3c" />
-        <StatCard icon={<LocalShipping fontSize="inherit" />} label="GRNs" value={grns.length || (tab !== 2 ? '—' : 0)} color="#f57c00" />
-        <StatCard icon={<Inventory2 fontSize="inherit" />} label="ERP Postings" value={erpPostings.length || (tab !== 6 ? '—' : 0)} color="#7b1fa2" />
+        <StatCard icon={<StoreMallDirectory fontSize="inherit" />} label="Vendors" value={vendors.length || (tab !== 0 ? '—' : 0)} color="#c9a227" />
+        <StatCard icon={<ReceiptLong fontSize="inherit" />} label="Purchase Orders" value={pos.length || (tab !== 1 ? '—' : 0)} color="#b8860b" />
+        <StatCard icon={<LocalShipping fontSize="inherit" />} label="GRNs" value={grns.length || (tab !== 2 ? '—' : 0)} color="#a8862b" />
+        <StatCard icon={<Inventory2 fontSize="inherit" />} label="ERP Postings" value={erpPostings.length || (tab !== 6 ? '—' : 0)} color="#8c6e2f" />
       </Stack>
 
       <Alert severity="info" sx={{ mb: 2 }}>
@@ -292,7 +292,7 @@ export default function Admin() {
                 <Typography variant="caption" color="text.secondary">{p.po_date}</Typography>
               </Box>
             </AccordionSummary>
-            <AccordionDetails sx={{ bgcolor: '#fafafa', pt: 0 }}>
+            <AccordionDetails sx={{ bgcolor: '#ffffff', pt: 0 }}>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
                 Line Items
               </Typography>
@@ -301,7 +301,7 @@ export default function Admin() {
               ) : (
                 <Table size="small">
                   <TableHead>
-                    <TableRow sx={{ bgcolor: '#e3f2fd' }}>
+                    <TableRow sx={{ bgcolor: '#ffffff' }}>
                       <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>#</TableCell>
                       <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>Description</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 700, fontSize: 12 }}>Qty</TableCell>
@@ -376,7 +376,7 @@ export default function Admin() {
                 )}
               </Box>
             </AccordionSummary>
-            <AccordionDetails sx={{ bgcolor: '#fafafa' }}>
+            <AccordionDetails sx={{ bgcolor: '#ffffff' }}>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   {[
@@ -384,7 +384,7 @@ export default function Admin() {
                     ['Total Accepted Qty', g.total_accepted_qty],
                     ['Line Items', g.line_items_count],
                   ].map(([k, v]) => (
-                    <Box key={String(k)} sx={{ display: 'flex', gap: 1, py: 0.5, borderBottom: '1px solid #f0f0f0' }}>
+                    <Box key={String(k)} sx={{ display: 'flex', gap: 1, py: 0.5, borderBottom: '1px solid #e0e0e0' }}>
                       <Typography variant="caption" color="text.secondary" sx={{ width: 160, flexShrink: 0 }}>{k}</Typography>
                       <Typography variant="caption" fontWeight={600}>{String(v)}</Typography>
                     </Box>
@@ -457,10 +457,10 @@ export default function Admin() {
               <Typography variant="caption" color="text.secondary">
                 Posting Date: {p.posting_date} | Fiscal Period: {p.fiscal_period}
               </Typography>
-              <Box sx={{ mt: 1, bgcolor: '#f5f5f5', borderRadius: 1, p: 1 }}>
+              <Box sx={{ mt: 1, bgcolor: '#ffffff', borderRadius: 1, p: 1 }}>
                 <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
                   <thead>
-                    <tr style={{ textAlign: 'left', borderBottom: '1px solid #ddd' }}>
+                    <tr style={{ textAlign: 'left', borderBottom: '1px solid #e0e0e0' }}>
                       <th style={{ padding: '4px 8px' }}>GL Account</th>
                       <th style={{ padding: '4px 8px' }}>Description</th>
                       <th style={{ textAlign: 'right', padding: '4px 8px' }}>Debit</th>
@@ -469,7 +469,7 @@ export default function Admin() {
                   </thead>
                   <tbody>
                     {(p.journal_entries || []).map((je: any, i: number) => (
-                      <tr key={i} style={{ borderBottom: '1px solid #eee' }}>
+                      <tr key={i} style={{ borderBottom: '1px solid #e0e0e0' }}>
                         <td style={{ padding: '4px 8px' }}>{je.account}</td>
                         <td style={{ padding: '4px 8px' }}>{je.description}</td>
                         <td style={{ textAlign: 'right', padding: '4px 8px' }}>{maskPii ? (je.debit ? maskAmount() : '') : (je.debit ? `₹${Number(je.debit).toLocaleString('en-IN')}` : '')}</td>

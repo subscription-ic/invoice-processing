@@ -17,17 +17,18 @@ import { dashboardApi } from '../../api/client'
 import type { DashboardStats } from '../../types'
 
 const STATUS_COLORS: Record<string, string> = {
-  COMPLETED:              '#2e7d32',
-  PENDING_APPROVAL:       '#e65100',
-  PROCESSING:             '#1565c0',
-  EXCEPTION:              '#c62828',
-  HUMAN_REVIEW_REQUIRED:  '#f57f17',
-  APPROVED:               '#388e3c',
-  POSTED:                 '#00695c',
+  COMPLETED:              '#A8862B',
+  PENDING_APPROVAL:       '#C9A227',
+  PROCESSING:             '#D4AF37',
+  EXCEPTION:              '#C62828',
+  HUMAN_REVIEW_REQUIRED:  '#B8860B',
+  APPROVED:               '#8C6E2F',
+  POSTED:                 '#6B5518',
   FAILED:                 '#b71c1c',
 }
 
-const PIE_COLORS = ['#1565c0', '#2e7d32', '#e65100', '#c62828', '#7b1fa2', '#0288d1', '#558b2f', '#f57f17']
+// Distinguishable black & gold chart scale (gold -> bronze -> cream -> taupe); red reserved for exceptions.
+const PIE_COLORS = ['#D4AF37', '#8C6E2F', '#E6C75A', '#6B5518', '#C9A227', '#A8862B', '#B0A080', '#3A2F14']
 
 function StatCard({
   title, value, subtitle, icon, color, onClick,
@@ -99,7 +100,7 @@ function StatCard({
       elevation={0}
       sx={{
         height: '100%',
-        border: '1px solid #e8eaed',
+        border: '1px solid #e0e0e0',
         borderLeft: `4px solid ${color}`,
         borderRadius: 2,
         transition: 'box-shadow 0.2s, transform 0.15s',
@@ -154,9 +155,9 @@ export default function Dashboard() {
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v)
 
   const slaItems = [
-    { label: 'Pending Approvals', value: stats.pending_approvals, color: '#e65100' },
+    { label: 'Pending Approvals', value: stats.pending_approvals, color: '#8c6e2f' },
     { label: 'Open Exceptions',   value: stats.open_exceptions,   color: '#c62828' },
-    { label: 'Processed Today',   value: stats.documents_today,   color: '#1565c0' },
+    { label: 'Processed Today',   value: stats.documents_today,   color: '#a8862b' },
   ]
   const slaMax = Math.max(...slaItems.map((i) => i.value), 1)
 
@@ -167,7 +168,7 @@ export default function Dashboard() {
         sx={{
           mb: 4,
           pb: 3,
-          borderBottom: '1px solid #e8eaed',
+          borderBottom: '1px solid #e0e0e0',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-end',
@@ -176,7 +177,7 @@ export default function Dashboard() {
         <Box>
           <Typography
             variant="h4"
-            sx={{ fontWeight: 800, letterSpacing: -0.5, color: '#0d1b2a' }}
+            sx={{ fontWeight: 800, letterSpacing: -0.5, color: '#0d0d0d' }}
           >
             AP Operations Center
           </Typography>
@@ -185,7 +186,7 @@ export default function Dashboard() {
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <FiberManualRecord sx={{ fontSize: 10, color: '#2e7d32', animation: 'pulse 2s infinite' }} />
+          <FiberManualRecord sx={{ fontSize: 10, color: '#a8862b', animation: 'pulse 2s infinite' }} />
           <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>
             Live
           </Typography>
@@ -206,7 +207,7 @@ export default function Dashboard() {
             value={stats.total_documents.toLocaleString()}
             subtitle={`${stats.documents_today} uploaded today`}
             icon={<Description />}
-            color="#1565c0"
+            color="#a8862b"
             onClick={() => navigate('/documents')}
           />
         </Grid>
@@ -216,7 +217,7 @@ export default function Dashboard() {
             value={stats.pending_approvals}
             subtitle="Awaiting decision"
             icon={<CheckCircle />}
-            color="#e65100"
+            color="#8c6e2f"
             onClick={() => navigate('/approvals')}
           />
         </Grid>
@@ -236,7 +237,7 @@ export default function Dashboard() {
             value={formatCurrency(Number(stats.total_invoice_amount))}
             subtitle="All time"
             icon={<AttachMoney />}
-            color="#6a1b9a"
+            color="#6b5518"
           />
         </Grid>
       </Grid>
@@ -248,9 +249,9 @@ export default function Dashboard() {
             elevation={0}
             sx={{
               height: '100%',
-              border: '1px solid #e8eaed',
+              border: '1px solid #e0e0e0',
               borderRadius: 2,
-              background: 'linear-gradient(135deg, #f0f4ff 0%, #fafbff 100%)',
+              background: 'linear-gradient(135deg, #ffffff 0%, #ffffff 100%)',
               cursor: 'pointer',
               transition: 'box-shadow 0.2s, transform 0.15s',
               '&:hover': { boxShadow: '0 6px 24px rgba(0,0,0,0.1)', transform: 'translateY(-2px)' },
@@ -259,20 +260,20 @@ export default function Dashboard() {
           >
             <CardActionArea sx={{ height: '100%', borderRadius: 2, p: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
-                <Box sx={{ width: 36, height: 36, borderRadius: 1.5, bgcolor: '#1565c018', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1565c0' }}>
+                <Box sx={{ width: 36, height: 36, borderRadius: 1.5, bgcolor: '#D4AF3718', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a8862b' }}>
                   <Inventory />
                 </Box>
                 <Typography sx={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', color: 'text.secondary' }}>
                   Documents Processed Today
                 </Typography>
               </Box>
-              <Typography sx={{ fontSize: 64, fontWeight: 900, lineHeight: 1, color: '#1565c0', fontVariantNumeric: 'tabular-nums' }}>
+              <Typography sx={{ fontSize: 64, fontWeight: 900, lineHeight: 1, color: '#a8862b', fontVariantNumeric: 'tabular-nums' }}>
                 {stats.documents_today}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
                 {stats.total_documents.toLocaleString()} total in system
               </Typography>
-              <Typography variant="caption" sx={{ mt: 1.5, display: 'block', color: '#1565c0', fontWeight: 600, opacity: 0.75 }}>
+              <Typography variant="caption" sx={{ mt: 1.5, display: 'block', color: '#a8862b', fontWeight: 600, opacity: 0.75 }}>
                 Click to view all →
               </Typography>
             </CardActionArea>
@@ -280,9 +281,9 @@ export default function Dashboard() {
         </Grid>
 
         <Grid item xs={12} md={8}>
-          <Card elevation={0} sx={{ height: '100%', border: '1px solid #e8eaed', borderRadius: 2 }}>
+          <Card elevation={0} sx={{ height: '100%', border: '1px solid #e0e0e0', borderRadius: 2 }}>
             <CardContent sx={{ p: 3 }}>
-              <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#0d1b2a', mb: 2 }}>
+              <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#0d0d0d', mb: 2 }}>
                 Documents by Status
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -308,7 +309,7 @@ export default function Dashboard() {
                     </Pie>
                     <Tooltip
                       formatter={(v, n) => [v, String(n).replace(/_/g, ' ')]}
-                      contentStyle={{ borderRadius: 8, fontSize: 12, border: '1px solid #e8eaed' }}
+                      contentStyle={{ borderRadius: 8, fontSize: 12, border: '1px solid #e0e0e0' }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -339,9 +340,9 @@ export default function Dashboard() {
       {/* ── Top Vendors + Exception Queue ───────────────────────── */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} md={7}>
-          <Card elevation={0} sx={{ height: '100%', border: '1px solid #e8eaed', borderRadius: 2 }}>
+          <Card elevation={0} sx={{ height: '100%', border: '1px solid #e0e0e0', borderRadius: 2 }}>
             <CardContent sx={{ p: 3 }}>
-              <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#0d1b2a', mb: 2 }}>
+              <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#0d0d0d', mb: 2 }}>
                 Top Vendors by Invoice Value
               </Typography>
               <List dense disablePadding>
@@ -354,8 +355,8 @@ export default function Dashboard() {
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <Typography
                                 sx={{
-                                  fontSize: 11, fontWeight: 800, color: '#6a1b9a',
-                                  bgcolor: '#6a1b9a12', px: 0.75, py: 0.25, borderRadius: 0.75,
+                                  fontSize: 11, fontWeight: 800, color: '#6b5518',
+                                  bgcolor: '#D4AF3712', px: 0.75, py: 0.25, borderRadius: 0.75,
                                   minWidth: 20, textAlign: 'center',
                                 }}
                               >
@@ -363,7 +364,7 @@ export default function Dashboard() {
                               </Typography>
                               <Typography variant="body2" fontWeight={600}>{v.vendor}</Typography>
                             </Box>
-                            <Typography variant="caption" fontWeight={700} color="#6a1b9a">
+                            <Typography variant="caption" fontWeight={700} color="#6b5518">
                               {formatCurrency(v.amount)}
                             </Typography>
                           </Box>
@@ -378,8 +379,8 @@ export default function Dashboard() {
                             }
                             sx={{
                               height: 5, borderRadius: 3,
-                              bgcolor: '#f3e8fd',
-                              '& .MuiLinearProgress-bar': { bgcolor: '#6a1b9a', borderRadius: 3 },
+                              bgcolor: '#ffffff',
+                              '& .MuiLinearProgress-bar': { bgcolor: '#6b5518', borderRadius: 3 },
                             }}
                           />
                         }
@@ -394,19 +395,19 @@ export default function Dashboard() {
         </Grid>
 
         <Grid item xs={12} md={5}>
-          <Card elevation={0} sx={{ height: '100%', border: '1px solid #e8eaed', borderRadius: 2 }}>
+          <Card elevation={0} sx={{ height: '100%', border: '1px solid #e0e0e0', borderRadius: 2 }}>
             <CardContent sx={{ p: 3 }}>
-              <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#0d1b2a', mb: 2 }}>
+              <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#0d0d0d', mb: 2 }}>
                 Open Exceptions by Queue
               </Typography>
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={exByQueue} barSize={28}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                   <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#666' }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: '#666' }} axisLine={false} tickLine={false} />
                   <Tooltip
-                    contentStyle={{ borderRadius: 8, fontSize: 12, border: '1px solid #e8eaed' }}
-                    cursor={{ fill: '#f5f5f5' }}
+                    contentStyle={{ borderRadius: 8, fontSize: 12, border: '1px solid #e0e0e0' }}
+                    cursor={{ fill: '#ffffff' }}
                   />
                   <Bar dataKey="value" name="Open Exceptions" fill="#c62828" radius={[4, 4, 0, 0]} />
                 </BarChart>
@@ -419,9 +420,9 @@ export default function Dashboard() {
       {/* ── SLA / Queue Health ──────────────────────────────────── */}
       <Grid container spacing={3}>
         <Grid item xs={12}>
-          <Card elevation={0} sx={{ border: '1px solid #e8eaed', borderRadius: 2 }}>
+          <Card elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 2 }}>
             <CardContent sx={{ p: 3 }}>
-              <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#0d1b2a', mb: 3 }}>
+              <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#0d0d0d', mb: 3 }}>
                 Queue Health
               </Typography>
               <Grid container spacing={4}>

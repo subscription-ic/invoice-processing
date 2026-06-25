@@ -157,7 +157,7 @@ export default function MockDB() {
         }}
       >
         {/* Header */}
-        <Box sx={{ px: 2, py: 1.5, bgcolor: '#0d1b2a', color: 'white', display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={{ px: 2, py: 1.5, bgcolor: '#0d0d0d', color: 'white', display: 'flex', alignItems: 'center', gap: 1 }}>
           <Storage fontSize="small" />
           <Typography variant="subtitle2" fontWeight={700}>PostgreSQL</Typography>
           {tablesLoading && <CircularProgress size={12} sx={{ ml: 'auto', color: 'white' }} />}
@@ -171,7 +171,7 @@ export default function MockDB() {
         </Box>
 
         {/* Search */}
-        <Box sx={{ px: 1, py: 1, borderBottom: '1px solid #eee' }}>
+        <Box sx={{ px: 1, py: 1, borderBottom: '1px solid #e0e0e0' }}>
           <TextField
             size="small" fullWidth placeholder="Filter tables…" value={sidebarSearch}
             onChange={(e) => setSidebarSearch(e.target.value)}
@@ -184,7 +184,7 @@ export default function MockDB() {
         <Box sx={{ flex: 1, overflowY: 'auto' }}>
           {Object.entries(grouped).map(([group, groupTables]) => (
             <React.Fragment key={group}>
-              <Typography variant="caption" sx={{ px: 2, py: 0.5, display: 'block', bgcolor: '#f5f5f5', color: 'text.secondary', fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', fontSize: 10 }}>
+              <Typography variant="caption" sx={{ px: 2, py: 0.5, display: 'block', bgcolor: '#ffffff', color: 'text.secondary', fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', fontSize: 10 }}>
                 {group}
               </Typography>
               <List dense disablePadding>
@@ -195,12 +195,12 @@ export default function MockDB() {
                     onClick={() => { setSelectedTable(t.table_name); setPage(1) }}
                     sx={{
                       py: 0.5, pl: 2,
-                      '&.Mui-selected': { bgcolor: '#e3f2fd' },
-                      '&.Mui-selected:hover': { bgcolor: '#bbdefb' },
+                      '&.Mui-selected': { bgcolor: '#ffffff' },
+                      '&.Mui-selected:hover': { bgcolor: '#ead18a' },
                     }}
                   >
                     <ListItemIcon sx={{ minWidth: 28 }}>
-                      <TableChart sx={{ fontSize: 15, color: selectedTable === t.table_name ? '#1976d2' : '#90a4ae' }} />
+                      <TableChart sx={{ fontSize: 15, color: selectedTable === t.table_name ? '#c9a227' : '#90a4ae' }} />
                     </ListItemIcon>
                     <ListItemText
                       primary={t.table_name}
@@ -216,7 +216,7 @@ export default function MockDB() {
         </Box>
 
         {/* Footer */}
-        <Box sx={{ px: 2, py: 1, borderTop: '1px solid #eee', bgcolor: '#fafafa' }}>
+        <Box sx={{ px: 2, py: 1, borderTop: '1px solid #e0e0e0', bgcolor: '#ffffff' }}>
           <Typography variant="caption" color="text.secondary">
             {tables.length} tables · public schema
           </Typography>
@@ -272,7 +272,7 @@ export default function MockDB() {
                       variant="outlined"
                       sx={{
                         fontSize: 10, height: 20, fontFamily: 'monospace',
-                        bgcolor: col.name === 'id' ? '#e3f2fd' : col.name.includes('_id') ? '#fff3e0' : 'transparent',
+                        bgcolor: col.name === 'id' ? '#ffffff' : col.name.includes('_id') ? '#ffffff' : 'transparent',
                       }}
                     />
                   </Tooltip>
@@ -298,14 +298,14 @@ export default function MockDB() {
                 <Table stickyHeader size="small" sx={{ minWidth: 600 }}>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ bgcolor: '#0d1b2a', color: 'white', fontSize: 11, fontWeight: 700, width: 40, textAlign: 'center', py: 1 }}>
+                      <TableCell sx={{ bgcolor: '#0d0d0d', color: 'white', fontSize: 11, fontWeight: 700, width: 40, textAlign: 'center', py: 1 }}>
                         #
                       </TableCell>
                       {tableData.columns.map((col: string) => (
                         <TableCell
                           key={col}
                           sx={{
-                            bgcolor: '#0d1b2a', color: 'white', fontSize: 11,
+                            bgcolor: '#0d0d0d', color: 'white', fontSize: 11,
                             fontWeight: 700, py: 1, fontFamily: 'monospace',
                             whiteSpace: 'nowrap',
                             minWidth: col === 'id' ? 100 : col.includes('_id') ? 100 : col.includes('data') || col.includes('text') || col.includes('entries') ? 160 : 90,
@@ -321,8 +321,8 @@ export default function MockDB() {
                       <TableRow
                         key={ri}
                         sx={{
-                          '&:nth-of-type(even)': { bgcolor: '#f9fafb' },
-                          '&:hover': { bgcolor: '#e3f2fd' },
+                          '&:nth-of-type(even)': { bgcolor: '#ffffff' },
+                          '&:hover': { bgcolor: '#ffffff' },
                         }}
                       >
                         <TableCell sx={{ color: '#90a4ae', fontSize: 11, textAlign: 'center' }}>
@@ -345,7 +345,7 @@ export default function MockDB() {
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                                 whiteSpace: 'nowrap',
-                                color: masked ? '#bbb' : undefined,
+                                color: masked ? '#e0e0e0' : undefined,
                               }}
                             >
                               {chip !== undefined ? (
@@ -358,7 +358,7 @@ export default function MockDB() {
                                 />
                               ) : (
                                 <Tooltip title={masked ? '(masked)' : String(rawVal ?? '')} placement="top" enterDelay={600}>
-                                  <span style={{ color: rawVal === null ? '#bbb' : undefined }}>
+                                  <span style={{ color: rawVal === null ? '#e0e0e0' : undefined }}>
                                     {display}
                                   </span>
                                 </Tooltip>
@@ -373,7 +373,7 @@ export default function MockDB() {
               </TableContainer>
 
               {/* Pagination footer */}
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 1, borderTop: '1px solid #eee', flexShrink: 0, bgcolor: '#fafafa' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 1, borderTop: '1px solid #e0e0e0', flexShrink: 0, bgcolor: '#ffffff' }}>
                 <Typography variant="caption" color="text.secondary">
                   {tableData.total.toLocaleString()} total rows · showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, tableData.total)} · {pageSize} per page
                 </Typography>

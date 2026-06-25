@@ -16,8 +16,8 @@ const SEVERITY_COLORS: Record<string, any> = {
 }
 
 const QUEUE_COLORS: Record<string, string> = {
-  AP_TEAM: '#1976d2', FINANCE: '#7b1fa2', PROCUREMENT: '#2e7d32',
-  COMPLIANCE: '#d32f2f', WAREHOUSE: '#f57f17',
+  AP_TEAM: '#c9a227', FINANCE: '#8c6e2f', PROCUREMENT: '#a8862b',
+  COMPLIANCE: '#d32f2f', WAREHOUSE: '#b8860b',
 }
 
 export default function Exceptions() {

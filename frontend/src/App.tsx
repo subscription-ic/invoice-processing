@@ -24,11 +24,20 @@ const queryClient = new QueryClient({
 
 const theme = createTheme({
   palette: {
-    mode: 'dark',
-    primary: { main: '#D4AF37', dark: '#A8862B', light: '#E6C75A', contrastText: '#000000' },
-    secondary: { main: '#FFD700', contrastText: '#000000' },
-    background: { default: '#0d0d0d', paper: '#1a1a1a' },
-    text: { primary: '#F5F5F5', secondary: '#C9A227' },
+    // Black & gold identity: light content surfaces, black chrome (sidebar/top bar/login),
+    // gold accents throughout. Strict palette — NO green / yellow / blue anywhere.
+    mode: 'light',
+    primary: { main: '#A8862B', dark: '#6B5518', light: '#D4AF37', contrastText: '#000000' },
+    secondary: { main: '#8C6E2F', dark: '#5A4A1F', light: '#C9A227', contrastText: '#000000' },
+    // success/info/warning are all gold shades (no green/blue/yellow).
+    // error keeps a restrained red for destructive/critical states only.
+    success: { main: '#A8862B', dark: '#6B5518', light: '#D4AF37', contrastText: '#000000' },
+    info: { main: '#8C6E2F', dark: '#5A4A1F', light: '#C9A227', contrastText: '#000000' },
+    warning: { main: '#B8860B', dark: '#6B5518', light: '#D4AF37', contrastText: '#000000' },
+    error: { main: '#C0392B', dark: '#8E2A20', light: '#E07B6E', contrastText: '#FFFFFF' },
+    background: { default: '#FAF8F3', paper: '#FFFFFF' },
+    text: { primary: '#1A1A1A', secondary: '#6B5518' },
+    divider: 'rgba(168,134,43,0.25)',
   },
   typography: {
     fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',

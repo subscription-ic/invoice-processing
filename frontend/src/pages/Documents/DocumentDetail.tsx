@@ -153,7 +153,7 @@ export default function DocumentDetail() {
           size="small"
           startIcon={<AutoAwesome />}
           onClick={() => setAiDialogOpen(true)}
-          sx={{ bgcolor: '#7b1fa2', '&:hover': { bgcolor: '#6a1b9a' } }}
+          sx={{ bgcolor: '#8c6e2f', '&:hover': { bgcolor: '#6b5518' } }}
         >
           AI Explanation
         </Button>
@@ -243,20 +243,20 @@ export default function DocumentDetail() {
 
                 return visibleStages.map(({ stage, timedEntry, status }, visIdx) => {
                   const circleColor =
-                    status === 'COMPLETED' ? '#4caf50' :
+                    status === 'COMPLETED' ? '#d4af37' :
                     status === 'ERROR'     ? '#f44336' :
-                    status === 'RUNNING'   ? '#1976d2' :
-                    status === 'STUCK'     ? '#e65100' : '#bdbdbd'
+                    status === 'RUNNING'   ? '#c9a227' :
+                    status === 'STUCK'     ? '#8c6e2f' : '#e0e0e0'
                   const circleBg =
-                    status === 'COMPLETED' ? '#e8f5e9' :
-                    status === 'ERROR'     ? '#ffebee' :
-                    status === 'RUNNING'   ? '#e3f2fd' :
-                    status === 'STUCK'     ? '#fff3e0' : '#fafafa'
+                    status === 'COMPLETED' ? '#ffffff' :
+                    status === 'ERROR'     ? '#fdecea' :
+                    status === 'RUNNING'   ? '#ffffff' :
+                    status === 'STUCK'     ? '#ffffff' : '#ffffff'
                   const labelColor =
-                    status === 'WAITING'   ? '#bdbdbd' :
+                    status === 'WAITING'   ? '#e0e0e0' :
                     status === 'RUNNING'   ? 'primary.main' :
                     status === 'ERROR'     ? 'error.main' :
-                    status === 'STUCK'     ? '#e65100' : 'text.primary'
+                    status === 'STUCK'     ? '#8c6e2f' : 'text.primary'
 
                   const isApprovalStage  = stage.key === 'APPROVAL'
                   const isExceptionStage = stage.key === 'EXCEPTION'
@@ -284,7 +284,7 @@ export default function DocumentDetail() {
                       }
                       return (
                         <Box sx={{ p: 0.5, maxWidth: 280 }}>
-                          <Typography variant="caption" fontWeight={700} display="block" sx={{ mb: 0.75, color: isStuck ? '#ffb74d' : '#81c784', fontSize: 11 }}>
+                          <Typography variant="caption" fontWeight={700} display="block" sx={{ mb: 0.75, color: isStuck ? '#e6c75a' : '#e6c75a', fontSize: 11 }}>
                             {isStuck ? 'Why is this awaiting approval?' : status === 'COMPLETED' ? 'Approval Completed' : 'Approval Stage'}
                           </Typography>
                           <Typography variant="caption" display="block" sx={{ mb: 0.75, lineHeight: 1.5 }}>{reason}</Typography>
@@ -295,12 +295,12 @@ export default function DocumentDetail() {
                           )}
                           {approval?.deadline && (
                             <Typography variant="caption" display="block" sx={{ mb: 0.3, color: new Date(approval.deadline) < new Date() ? '#ef9a9a' : '#b0bec5' }}>
-                              Due: <strong style={{ color: new Date(approval.deadline) < new Date() ? '#ef9a9a' : '#fff' }}>
+                              Due: <strong style={{ color: new Date(approval.deadline) < new Date() ? '#ef9a9a' : '#ffffff' }}>
                                 {new Date(approval.deadline).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}
                               </strong>
                             </Typography>
                           )}
-                          <Typography variant="caption" display="block" sx={{ mt: 0.75, color: '#90caf9', fontStyle: 'italic' }}>
+                          <Typography variant="caption" display="block" sx={{ mt: 0.75, color: '#e6c75a', fontStyle: 'italic' }}>
                             Click to open this document's approval
                           </Typography>
                         </Box>
@@ -310,26 +310,26 @@ export default function DocumentDetail() {
                     if (isExceptionStage) {
                       const exc = docExceptions[0]
                       const isStuck = status === 'STUCK'
-                      const SEVERITY_COLOR: Record<string, string> = { CRITICAL: '#ef9a9a', HIGH: '#ffb74d', MEDIUM: '#fff59d', LOW: '#a5d6a7' }
+                      const SEVERITY_COLOR: Record<string, string> = { CRITICAL: '#ef9a9a', HIGH: '#e6c75a', MEDIUM: '#ead18a', LOW: '#ead18a' }
                       return (
                         <Box sx={{ p: 0.5, maxWidth: 280 }}>
-                          <Typography variant="caption" fontWeight={700} display="block" sx={{ mb: 0.75, color: isStuck ? '#ffb74d' : '#81c784', fontSize: 11 }}>
+                          <Typography variant="caption" fontWeight={700} display="block" sx={{ mb: 0.75, color: isStuck ? '#e6c75a' : '#e6c75a', fontSize: 11 }}>
                             {isStuck ? 'Why is this an exception?' : status === 'COMPLETED' ? 'Exception Resolved' : 'Exception Stage'}
                           </Typography>
                           {exc ? (
                             <>
                               <Typography variant="caption" display="block" sx={{ mb: 0.4, fontWeight: 600 }}>{exc.title}</Typography>
                               {exc.description && (
-                                <Typography variant="caption" display="block" sx={{ mb: 0.5, lineHeight: 1.5, color: '#ccc' }}>{exc.description}</Typography>
+                                <Typography variant="caption" display="block" sx={{ mb: 0.5, lineHeight: 1.5, color: '#e0e0e0' }}>{exc.description}</Typography>
                               )}
                               <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mb: 0.5 }}>
                                 {exc.severity && (
-                                  <span style={{ fontSize: 10, fontWeight: 700, color: SEVERITY_COLOR[exc.severity] || '#fff', border: `1px solid ${SEVERITY_COLOR[exc.severity] || '#888'}`, borderRadius: 4, padding: '1px 5px' }}>
+                                  <span style={{ fontSize: 10, fontWeight: 700, color: SEVERITY_COLOR[exc.severity] || '#ffffff', border: `1px solid ${SEVERITY_COLOR[exc.severity] || '#888'}`, borderRadius: 4, padding: '1px 5px' }}>
                                     {exc.severity}
                                   </span>
                                 )}
                                 {exc.queue && (
-                                  <span style={{ fontSize: 10, color: '#90caf9', border: '1px solid #42a5f5', borderRadius: 4, padding: '1px 5px' }}>{exc.queue}</span>
+                                  <span style={{ fontSize: 10, color: '#e6c75a', border: '1px solid #e6c75a', borderRadius: 4, padding: '1px 5px' }}>{exc.queue}</span>
                                 )}
                                 {exc.status && (
                                   <span style={{ fontSize: 10, color: '#b0bec5', border: '1px solid #546e7a', borderRadius: 4, padding: '1px 5px' }}>{exc.status}</span>
@@ -341,7 +341,7 @@ export default function DocumentDetail() {
                               Document processing was halted pending human review.
                             </Typography>
                           )}
-                          <Typography variant="caption" display="block" sx={{ mt: 0.75, color: '#90caf9', fontStyle: 'italic' }}>
+                          <Typography variant="caption" display="block" sx={{ mt: 0.75, color: '#e6c75a', fontStyle: 'italic' }}>
                             Click to open this exception
                           </Typography>
                         </Box>
@@ -377,11 +377,11 @@ export default function DocumentDetail() {
                         transition: 'all 0.3s',
                         ...(isInteractive && { '&:hover': { opacity: 0.8 } }),
                       }}>
-                        {status === 'COMPLETED' && <CheckCircle    sx={{ fontSize: 18, color: '#4caf50' }} />}
+                        {status === 'COMPLETED' && <CheckCircle    sx={{ fontSize: 18, color: '#d4af37' }} />}
                         {status === 'ERROR'     && <Cancel         sx={{ fontSize: 18, color: '#f44336' }} />}
                         {status === 'RUNNING'   && <CircularProgress size={16} color="primary" />}
-                        {status === 'STUCK'     && <PauseCircle    sx={{ fontSize: 18, color: '#e65100' }} />}
-                        {status === 'WAITING'   && <Typography variant="caption" sx={{ fontSize: 11, color: '#bdbdbd', fontWeight: 700 }}>{visIdx + 1}</Typography>}
+                        {status === 'STUCK'     && <PauseCircle    sx={{ fontSize: 18, color: '#8c6e2f' }} />}
+                        {status === 'WAITING'   && <Typography variant="caption" sx={{ fontSize: 11, color: '#e0e0e0', fontWeight: 700 }}>{visIdx + 1}</Typography>}
                       </Box>
                       <Typography sx={{
                         fontSize: 10, fontWeight: status === 'RUNNING' || status === 'STUCK' ? 700 : 600, mt: 0.6,
@@ -391,12 +391,12 @@ export default function DocumentDetail() {
                       </Typography>
                       <Typography sx={{
                         fontSize: 9, textAlign: 'center', lineHeight: 1.2, mt: 0.25, px: 0.5,
-                        color: status === 'WAITING' ? '#d0d0d0' : '#9e9e9e', fontStyle: 'italic',
+                        color: status === 'WAITING' ? '#e0e0e0' : '#9e9e9e', fontStyle: 'italic',
                       }}>
                         {stage.agent}
                       </Typography>
                       {timedEntry?.started_at && status !== 'WAITING' && (
-                        <Typography sx={{ fontSize: 8, color: '#bdbdbd', textAlign: 'center', mt: 0.3 }}>
+                        <Typography sx={{ fontSize: 8, color: '#e0e0e0', textAlign: 'center', mt: 0.3 }}>
                           {new Date(timedEntry.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </Typography>
                       )}
@@ -407,9 +407,9 @@ export default function DocumentDetail() {
                     <Box sx={{
                       flexShrink: 0, width: 20, height: 2, mt: '17px',
                       bgcolor:
-                        status === 'COMPLETED' ? '#4caf50' :
+                        status === 'COMPLETED' ? '#d4af37' :
                         status === 'ERROR'     ? '#f44336' :
-                        status === 'STUCK'     ? '#e65100' : '#e0e0e0',
+                        status === 'STUCK'     ? '#8c6e2f' : '#e0e0e0',
                       transition: 'background-color 0.4s',
                     }} />
                   ) : null
@@ -421,7 +421,7 @@ export default function DocumentDetail() {
                           title={stageTooltip}
                           placement="bottom"
                           arrow
-                          componentsProps={{ tooltip: { sx: { bgcolor: '#1a237e', maxWidth: 300 } }, arrow: { sx: { color: '#1a237e' } } }}
+                          componentsProps={{ tooltip: { sx: { bgcolor: '#6b5518', maxWidth: 300 } }, arrow: { sx: { color: '#6b5518' } } }}
                         >
                           {stageNode}
                         </Tooltip>
@@ -561,7 +561,7 @@ export default function DocumentDetail() {
                   ['Source', doc.ingestion_source],
                   ['Uploaded', formatDateTime(doc.created_at)],
                 ].map(([k, v]) => (
-                  <Box key={k} sx={{ display: 'flex', py: 0.75, borderBottom: '1px solid #f0f0f0' }}>
+                  <Box key={k} sx={{ display: 'flex', py: 0.75, borderBottom: '1px solid #e0e0e0' }}>
                     <Typography variant="body2" color="text.secondary" sx={{ width: 140, flexShrink: 0 }}>{k}</Typography>
                     <Typography variant="body2" fontWeight={500}>{v}</Typography>
                   </Box>
@@ -593,7 +593,7 @@ export default function DocumentDetail() {
                   ['Tax Amount', doc.tax_amount ? `₹${Number(doc.tax_amount).toLocaleString('en-IN')}` : '—'],
                   ['Total Amount', doc.total_amount ? `₹${Number(doc.total_amount).toLocaleString('en-IN')}` : '—'],
                 ]})().map(([k, v]) => (
-                  <Box key={k} sx={{ display: 'flex', py: 0.75, borderBottom: '1px solid #f0f0f0' }}>
+                  <Box key={k} sx={{ display: 'flex', py: 0.75, borderBottom: '1px solid #e0e0e0' }}>
                     <Typography variant="body2" color="text.secondary" sx={{ width: 140, flexShrink: 0 }}>{k}</Typography>
                     <Typography variant="body2" fontWeight={500}>{v}</Typography>
                   </Box>
@@ -603,7 +603,7 @@ export default function DocumentDetail() {
           </Grid>
           {doc.ai_profile_confidence && (
             <Grid item xs={12}>
-              <Card sx={{ bgcolor: '#e8f4fd', border: '1px solid #90caf9' }}>
+              <Card sx={{ bgcolor: '#ffffff', border: '1px solid #e6c75a' }}>
                 <CardContent>
                   <Typography variant="subtitle2" fontWeight={700} color="primary" gutterBottom>
                     🤖 AI Profile Decision — {doc.business_profile?.replace(/_/g, ' ')} ({(Number(doc.ai_profile_confidence) * 100).toFixed(0)}% confidence)
@@ -622,7 +622,7 @@ export default function DocumentDetail() {
           <CardContent>
             <Typography variant="subtitle2" fontWeight={700} gutterBottom>Raw Extracted Fields</Typography>
             {doc.extracted_data ? (
-              <Box component="pre" sx={{ fontSize: 12, overflow: 'auto', bgcolor: '#f5f5f5', p: 2, borderRadius: 2 }}>
+              <Box component="pre" sx={{ fontSize: 12, overflow: 'auto', bgcolor: '#ffffff', p: 2, borderRadius: 2 }}>
                 {JSON.stringify(doc.extracted_data, null, 2)}
               </Box>
             ) : (
@@ -652,7 +652,7 @@ export default function DocumentDetail() {
           </TableHead>
           <TableBody>
             {validations.map((v) => (
-              <TableRow key={v.id} sx={{ bgcolor: v.status === 'FAIL' ? '#fff5f5' : v.status === 'WARNING' ? '#fffde7' : 'inherit', verticalAlign: 'top' }}>
+              <TableRow key={v.id} sx={{ bgcolor: v.status === 'FAIL' ? '#fdecea' : v.status === 'WARNING' ? '#ffffff' : 'inherit', verticalAlign: 'top' }}>
                 <TableCell sx={{ width: 160 }}><Typography variant="body2" fontWeight={600} sx={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>{v.rule_name || v.rule_code}</Typography></TableCell>
                 <TableCell sx={{ width: 90 }}><Chip label={v.status} size="small" color={STATUS_COLOR[v.status]} /></TableCell>
                 <TableCell sx={{ width: 180 }}><Typography variant="caption" sx={{ whiteSpace: 'normal', wordBreak: 'break-all' }}>{v.expected_value || '—'}</Typography></TableCell>
@@ -712,7 +712,7 @@ export default function DocumentDetail() {
                     { label: 'Price Match', value: matching.price_match },
                     { label: 'Total Amount Match', value: matching.total_match },
                   ].map(({ label, value }) => (
-                    <Box key={label} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.75, borderBottom: '1px solid #f0f0f0' }}>
+                    <Box key={label} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.75, borderBottom: '1px solid #e0e0e0' }}>
                       <Typography variant="body2">{label}</Typography>
                       <Chip
                         label={value === null ? 'N/A' : value ? 'MATCH' : 'MISMATCH'}
@@ -722,7 +722,7 @@ export default function DocumentDetail() {
                     </Box>
                   ))}
                   {matching.variance_report && (
-                    <Box sx={{ mt: 1.5, p: 1.5, bgcolor: '#f9f9f9', borderRadius: 1 }}>
+                    <Box sx={{ mt: 1.5, p: 1.5, bgcolor: '#ffffff', borderRadius: 1 }}>
                       <Typography variant="caption" fontWeight={700} display="block" gutterBottom>Amount Variance</Typography>
                       <Box sx={{ display: 'flex', gap: 4 }}>
                         <Box>
@@ -764,22 +764,22 @@ export default function DocumentDetail() {
                         <TableHead>
                           <TableRow>
                             <TableCell rowSpan={2} sx={{ fontWeight: 700, verticalAlign: 'bottom' }}>Item</TableCell>
-                            <TableCell colSpan={2} align="center" sx={{ bgcolor: '#e3f2fd', fontWeight: 700, borderLeft: '2px solid #fff' }}>PURCHASE ORDER</TableCell>
-                            <TableCell colSpan={2} align="center" sx={{ bgcolor: '#fff3e0', fontWeight: 700, borderLeft: '2px solid #fff' }}>INVOICE</TableCell>
-                            <TableCell colSpan={2} align="center" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, borderLeft: '2px solid #fff' }}>RESULT</TableCell>
+                            <TableCell colSpan={2} align="center" sx={{ bgcolor: '#ffffff', fontWeight: 700, borderLeft: '2px solid #ffffff' }}>PURCHASE ORDER</TableCell>
+                            <TableCell colSpan={2} align="center" sx={{ bgcolor: '#ffffff', fontWeight: 700, borderLeft: '2px solid #ffffff' }}>INVOICE</TableCell>
+                            <TableCell colSpan={2} align="center" sx={{ bgcolor: '#ffffff', fontWeight: 700, borderLeft: '2px solid #ffffff' }}>RESULT</TableCell>
                           </TableRow>
                           <TableRow sx={{ '& th': { fontSize: 11, fontWeight: 600 } }}>
-                            <TableCell align="right" sx={{ bgcolor: '#e3f2fd' }}>Qty</TableCell>
-                            <TableCell align="right" sx={{ bgcolor: '#e3f2fd' }}>Unit Price</TableCell>
-                            <TableCell align="right" sx={{ bgcolor: '#fff3e0' }}>Qty</TableCell>
-                            <TableCell align="right" sx={{ bgcolor: '#fff3e0' }}>Unit Price</TableCell>
-                            <TableCell align="center" sx={{ bgcolor: '#f5f5f5' }}>Price</TableCell>
-                            <TableCell align="center" sx={{ bgcolor: '#f5f5f5' }}>Status</TableCell>
+                            <TableCell align="right" sx={{ bgcolor: '#ffffff' }}>Qty</TableCell>
+                            <TableCell align="right" sx={{ bgcolor: '#ffffff' }}>Unit Price</TableCell>
+                            <TableCell align="right" sx={{ bgcolor: '#ffffff' }}>Qty</TableCell>
+                            <TableCell align="right" sx={{ bgcolor: '#ffffff' }}>Unit Price</TableCell>
+                            <TableCell align="center" sx={{ bgcolor: '#ffffff' }}>Price</TableCell>
+                            <TableCell align="center" sx={{ bgcolor: '#ffffff' }}>Status</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
                           {matching.line_matches.map((lm: any, i: number) => (
-                            <TableRow key={i} sx={{ bgcolor: lm.status === 'MATCH' ? 'inherit' : '#fff5f5' }}>
+                            <TableRow key={i} sx={{ bgcolor: lm.status === 'MATCH' ? 'inherit' : '#fdecea' }}>
                               <TableCell><Typography variant="caption" fontWeight={600}>{lm.item || `Line ${lm.line_number}`}</Typography></TableCell>
                               <TableCell align="right">{lm.po ? lm.po.qty : '—'}</TableCell>
                               <TableCell align="right">{lm.po ? `₹${lm.po.price}` : '—'}</TableCell>
@@ -848,7 +848,7 @@ export default function DocumentDetail() {
                     { label: 'Tax Match', value: matching.tax_match },
                     { label: 'Total Match', value: matching.total_match },
                   ].map(({ label, value }) => (
-                    <Box key={label} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.75, borderBottom: '1px solid #f0f0f0' }}>
+                    <Box key={label} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.75, borderBottom: '1px solid #e0e0e0' }}>
                       <Typography variant="body2">{label}</Typography>
                       <Chip label={value === null ? 'N/A' : value ? 'MATCH' : 'MISMATCH'} size="small"
                         color={value === null ? 'default' : value ? 'success' : 'error'} />
@@ -878,25 +878,25 @@ export default function DocumentDetail() {
                       <TableHead>
                         <TableRow>
                           <TableCell rowSpan={2} sx={{ fontWeight: 700, verticalAlign: 'bottom' }}>Item</TableCell>
-                          <TableCell colSpan={2} align="center" sx={{ bgcolor: '#e3f2fd', fontWeight: 700, borderLeft: '2px solid #fff' }}>PURCHASE ORDER</TableCell>
-                          <TableCell colSpan={1} align="center" sx={{ bgcolor: '#e8f5e9', fontWeight: 700, borderLeft: '2px solid #fff' }}>GOODS RECEIPT</TableCell>
-                          <TableCell colSpan={2} align="center" sx={{ bgcolor: '#fff3e0', fontWeight: 700, borderLeft: '2px solid #fff' }}>INVOICE</TableCell>
-                          <TableCell colSpan={3} align="center" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, borderLeft: '2px solid #fff' }}>RESULT</TableCell>
+                          <TableCell colSpan={2} align="center" sx={{ bgcolor: '#ffffff', fontWeight: 700, borderLeft: '2px solid #ffffff' }}>PURCHASE ORDER</TableCell>
+                          <TableCell colSpan={1} align="center" sx={{ bgcolor: '#ffffff', fontWeight: 700, borderLeft: '2px solid #ffffff' }}>GOODS RECEIPT</TableCell>
+                          <TableCell colSpan={2} align="center" sx={{ bgcolor: '#ffffff', fontWeight: 700, borderLeft: '2px solid #ffffff' }}>INVOICE</TableCell>
+                          <TableCell colSpan={3} align="center" sx={{ bgcolor: '#ffffff', fontWeight: 700, borderLeft: '2px solid #ffffff' }}>RESULT</TableCell>
                         </TableRow>
                         <TableRow sx={{ '& th': { fontSize: 11, fontWeight: 600 } }}>
-                          <TableCell align="right" sx={{ bgcolor: '#e3f2fd' }}>Qty</TableCell>
-                          <TableCell align="right" sx={{ bgcolor: '#e3f2fd' }}>Unit Price</TableCell>
-                          <TableCell align="right" sx={{ bgcolor: '#e8f5e9' }}>Qty Recd</TableCell>
-                          <TableCell align="right" sx={{ bgcolor: '#fff3e0' }}>Qty</TableCell>
-                          <TableCell align="right" sx={{ bgcolor: '#fff3e0' }}>Unit Price</TableCell>
-                          <TableCell align="center" sx={{ bgcolor: '#f5f5f5' }}>Qty</TableCell>
-                          <TableCell align="center" sx={{ bgcolor: '#f5f5f5' }}>Price</TableCell>
-                          <TableCell align="center" sx={{ bgcolor: '#f5f5f5' }}>Status</TableCell>
+                          <TableCell align="right" sx={{ bgcolor: '#ffffff' }}>Qty</TableCell>
+                          <TableCell align="right" sx={{ bgcolor: '#ffffff' }}>Unit Price</TableCell>
+                          <TableCell align="right" sx={{ bgcolor: '#ffffff' }}>Qty Recd</TableCell>
+                          <TableCell align="right" sx={{ bgcolor: '#ffffff' }}>Qty</TableCell>
+                          <TableCell align="right" sx={{ bgcolor: '#ffffff' }}>Unit Price</TableCell>
+                          <TableCell align="center" sx={{ bgcolor: '#ffffff' }}>Qty</TableCell>
+                          <TableCell align="center" sx={{ bgcolor: '#ffffff' }}>Price</TableCell>
+                          <TableCell align="center" sx={{ bgcolor: '#ffffff' }}>Status</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {matching.line_matches.map((lm: any, i: number) => (
-                          <TableRow key={i} sx={{ bgcolor: lm.status === 'MATCH' ? 'inherit' : '#fff5f5' }}>
+                          <TableRow key={i} sx={{ bgcolor: lm.status === 'MATCH' ? 'inherit' : '#fdecea' }}>
                             <TableCell><Typography variant="caption" fontWeight={600}>{lm.item || `Line ${lm.line_number}`}</Typography></TableCell>
                             <TableCell align="right">{lm.po ? lm.po.qty : '—'}</TableCell>
                             <TableCell align="right">{lm.po ? `₹${lm.po.price}` : '—'}</TableCell>
@@ -931,7 +931,7 @@ export default function DocumentDetail() {
                     <Typography variant="subtitle2" fontWeight={700} gutterBottom>PO Balance Draw-down</Typography>
                     <Table size="small">
                       <TableHead>
-                        <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+                        <TableRow sx={{ bgcolor: '#ffffff' }}>
                           <TableCell>PO Line</TableCell>
                           <TableCell align="right">PO Qty</TableCell>
                           <TableCell align="right">Remaining Before</TableCell>
@@ -989,7 +989,7 @@ export default function DocumentDetail() {
             </Box>
             <Typography variant="subtitle2" fontWeight={700} gutterBottom>Raw OCR / Source Text</Typography>
             {doc.ocr_text ? (
-              <Box component="pre" sx={{ fontSize: 12, whiteSpace: 'pre-wrap', overflow: 'auto', maxHeight: 500, bgcolor: '#1e1e1e', color: '#d4d4d4', p: 2, borderRadius: 2 }}>
+              <Box component="pre" sx={{ fontSize: 12, whiteSpace: 'pre-wrap', overflow: 'auto', maxHeight: 500, bgcolor: '#1e1e1e', color: '#e0e0e0', p: 2, borderRadius: 2 }}>
                 {doc.ocr_text}
               </Box>
             ) : (
@@ -1002,7 +1002,7 @@ export default function DocumentDetail() {
       {/* AI Explanation Dialog */}
       <Dialog open={aiDialogOpen} onClose={() => setAiDialogOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, pb: 1 }}>
-          <AutoAwesome sx={{ color: '#7b1fa2' }} />
+          <AutoAwesome sx={{ color: '#8c6e2f' }} />
           AI Explanation — {doc.document_id}
           <IconButton onClick={() => setAiDialogOpen(false)} sx={{ ml: 'auto' }}>
             <Close />
@@ -1016,8 +1016,8 @@ export default function DocumentDetail() {
               <Grid item xs={12}>
                 <Card sx={{
                   border: '2px solid',
-                  borderColor: explanation.decision_color === 'success' ? '#4caf50' : explanation.decision_color === 'error' ? '#f44336' : explanation.decision_color === 'warning' ? '#ff9800' : '#2196f3',
-                  bgcolor: explanation.decision_color === 'success' ? '#f1f8e9' : explanation.decision_color === 'error' ? '#fff5f5' : explanation.decision_color === 'warning' ? '#fff8e1' : '#e3f2fd',
+                  borderColor: explanation.decision_color === 'success' ? '#d4af37' : explanation.decision_color === 'error' ? '#f44336' : explanation.decision_color === 'warning' ? '#d4af37' : '#d4af37',
+                  bgcolor: explanation.decision_color === 'success' ? '#ffffff' : explanation.decision_color === 'error' ? '#fdecea' : explanation.decision_color === 'warning' ? '#ffffff' : '#ffffff',
                 }}>
                   <CardContent>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
@@ -1074,7 +1074,7 @@ export default function DocumentDetail() {
                                 <Typography variant="caption" color="text.secondary">{label}</Typography>
                                 <Typography variant="caption" fontWeight={700}>{((value as number) * 100).toFixed(0)}%</Typography>
                               </Box>
-                              <LinearProgress variant="determinate" value={(value as number) * 100} sx={{ height: 8, borderRadius: 4, bgcolor: '#eee', '& .MuiLinearProgress-bar': { bgcolor: (value as number) >= 0.85 ? '#4caf50' : (value as number) >= 0.60 ? '#ff9800' : '#f44336' } }} />
+                              <LinearProgress variant="determinate" value={(value as number) * 100} sx={{ height: 8, borderRadius: 4, bgcolor: '#e0e0e0', '& .MuiLinearProgress-bar': { bgcolor: (value as number) >= 0.85 ? '#d4af37' : (value as number) >= 0.60 ? '#d4af37' : '#f44336' } }} />
                             </Box>
                           ))}
                         </>
@@ -1089,7 +1089,7 @@ export default function DocumentDetail() {
                   <CardContent>
                     <Typography variant="subtitle2" fontWeight={700} gutterBottom>Contributing Factors</Typography>
                     {(explanation.contributing_factors || []).map((f: any, i: number) => (
-                      <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, py: 1, borderBottom: '1px solid #f0f0f0' }}>
+                      <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, py: 1, borderBottom: '1px solid #e0e0e0' }}>
                         {f.direction === 'POSITIVE' ? <TrendingUp sx={{ color: 'success.main', mt: 0.3, flexShrink: 0 }} fontSize="small" />
                          : f.direction === 'NEGATIVE' ? <TrendingDown sx={{ color: 'error.main', mt: 0.3, flexShrink: 0 }} fontSize="small" />
                          : <TrendingFlat sx={{ color: 'text.secondary', mt: 0.3, flexShrink: 0 }} fontSize="small" />}
@@ -1165,7 +1165,7 @@ export default function DocumentDetail() {
                         {new Date(log.timestamp).toLocaleString()} | {log.entity_type}
                       </Typography>
                       {log.after_state && (
-                        <Box component="pre" sx={{ fontSize: 10, mt: 0.5, bgcolor: '#f5f5f5', p: 1, borderRadius: 1, maxHeight: 80, overflow: 'auto' }}>
+                        <Box component="pre" sx={{ fontSize: 10, mt: 0.5, bgcolor: '#ffffff', p: 1, borderRadius: 1, maxHeight: 80, overflow: 'auto' }}>
                           {JSON.stringify(log.after_state, null, 2)}
                         </Box>
                       )}
@@ -1173,7 +1173,7 @@ export default function DocumentDetail() {
                   }
                 />
               </ListItem>
-              {i < auditLogs.length - 1 && <Box sx={{ borderBottom: '1px solid #f0f0f0', ml: 2 }} />}
+              {i < auditLogs.length - 1 && <Box sx={{ borderBottom: '1px solid #e0e0e0', ml: 2 }} />}
             </React.Fragment>
           ))}
           {auditLogs.length === 0 && <Alert severity="info">No audit records yet</Alert>}

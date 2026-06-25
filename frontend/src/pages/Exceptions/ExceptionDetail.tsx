@@ -33,15 +33,15 @@ const ICON_MAP: Record<string, React.ReactNode> = {
 }
 
 const ICON_BG: Record<string, string> = {
-  duplicate: '#fdecea', mismatch: '#fff3e0', arithmetic: '#fdecea',
-  validation: '#fff8e1', po: '#f3e5f5', ocr: '#e3f2fd',
-  handwriting: '#e3f2fd', image: '#e3f2fd', generic: '#f5f5f5',
+  duplicate: '#fdecea', mismatch: '#ffffff', arithmetic: '#fdecea',
+  validation: '#ffffff', po: '#ffffff', ocr: '#ffffff',
+  handwriting: '#ffffff', image: '#ffffff', generic: '#ffffff',
 }
 
 const ICON_FG: Record<string, string> = {
-  duplicate: '#c62828', mismatch: '#e65100', arithmetic: '#c62828',
-  validation: '#f9a825', po: '#6a1b9a', ocr: '#1565c0',
-  handwriting: '#1565c0', image: '#1565c0', generic: '#424242',
+  duplicate: '#c62828', mismatch: '#8c6e2f', arithmetic: '#c62828',
+  validation: '#c9a227', po: '#6b5518', ocr: '#a8862b',
+  handwriting: '#a8862b', image: '#a8862b', generic: '#424242',
 }
 
 function fmt(n: number | null | undefined, currency = 'INR') {
@@ -79,7 +79,7 @@ function Section({ title, children, accent }: { title: string; children: React.R
     <Card sx={{ mb: 2.5, borderRadius: 2, overflow: 'hidden' }}>
       <Box sx={{
         px: 2.5, py: 1.5,
-        borderLeft: `4px solid ${accent || '#1976d2'}`,
+        borderLeft: `4px solid ${accent || '#c9a227'}`,
         bgcolor: 'grey.50',
         borderBottom: '1px solid', borderColor: 'divider',
       }}>
@@ -296,7 +296,7 @@ export default function ExceptionDetail() {
                 sx={{
                   display: 'flex', gap: 2, alignItems: 'flex-start',
                   p: 1.5, borderRadius: 1.5,
-                  bgcolor: ICON_BG[item.icon] || '#fafafa',
+                  bgcolor: ICON_BG[item.icon] || '#ffffff',
                   border: '1px solid', borderColor: 'divider',
                 }}
               >
@@ -389,7 +389,7 @@ export default function ExceptionDetail() {
 
       {/* ── PO / GRN matching detail ── */}
       {matching_detail && (
-        <Section title="PO / GRN Match Detail" accent="#e65100">
+        <Section title="PO / GRN Match Detail" accent="#8c6e2f">
           {/* Score cards */}
           <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
             {[
@@ -471,7 +471,7 @@ export default function ExceptionDetail() {
 
       {/* ── Validation rule failures ── */}
       {validation_failures.length > 0 && (
-        <Section title="Failed Validation Rules" accent="#f9a825">
+        <Section title="Failed Validation Rules" accent="#c9a227">
           <Table size="small" sx={{ '& th': { bgcolor: 'grey.100', fontWeight: 700 } }}>
             <TableHead>
               <TableRow>
@@ -506,7 +506,7 @@ export default function ExceptionDetail() {
 
       {/* ── Invoice snapshot ── */}
       {doc && (
-        <Section title="Invoice Details" accent="#1976d2">
+        <Section title="Invoice Details" accent="#c9a227">
           <Grid container spacing={3}>
             <Grid item xs={12} sm={6}>
               <Typography variant="caption" color="text.secondary" fontWeight={700} textTransform="uppercase" letterSpacing={0.5}>
