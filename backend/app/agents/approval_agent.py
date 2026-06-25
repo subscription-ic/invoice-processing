@@ -9,9 +9,11 @@ from sqlalchemy.orm import Session
 from app.agents.base import AgentState, BaseAgent
 from app.models.models import (
     Approval, ApprovalRule, ApprovalStatus, Document, DocumentStatus,
-    Notification, ProcessingStage, User
+    MatchingResult, Notification, ProcessingStage, User, ValidationResult,
 )
 from app.tools.audit_tool import log_audit, update_workflow_stage
+
+AUTO_APPROVE_THRESHOLD = Decimal("25000")
 
 
 class ApprovalAgent(BaseAgent):
@@ -29,6 +31,19 @@ class ApprovalAgent(BaseAgent):
     def _execute(self, state: AgentState) -> AgentState:
         document_id: str = state["document_id"]
         doc = self.db.query(Document).filter(Document.id == document_id).first()
+
+        # Auto-approve low-value invoices with no validation failures
+        amount = Decimal(str(doc.total_amount or 0))
+        if 0 < amount < AUTO_APPROVE_THRESHOLD:
+            fail_count = (
+                self.db.query(ValidationResult)
+                .filter(ValidationResult.document_id == document_id, ValidationResult.status == "FAIL")
+                .count()
+            )
+            mr = self.db.query(MatchingResult).filter(MatchingResult.document_id == document_id).first()
+            matching_ok = (not mr) or mr.match_status in ("MATCHED", "TOLERANCE_MATCH", "NOT_APPLICABLE")
+            if fail_count == 0 and matching_ok:
+                return self._auto_approve_low_value(state, doc, document_id, amount)
 
         # Find matching approval rule
         rule = self._find_approval_rule(doc)
@@ -163,6 +178,31 @@ class ApprovalAgent(BaseAgent):
         )
         self.db.add(notif)
         self.db.flush()
+
+    def _auto_approve_low_value(
+        self, state: AgentState, doc: Document, document_id: str, amount: Decimal
+    ) -> AgentState:
+        log_audit(
+            self.db,
+            document_id=document_id,
+            entity_type="APPROVAL",
+            action="AUTO_APPROVED_LOW_VALUE",
+            agent=self.name,
+            log_metadata={
+                "reason": f"Invoice total ₹{amount} is below ₹{AUTO_APPROVE_THRESHOLD} threshold with no validation failures — auto-approved",
+            },
+            stage=ProcessingStage.APPROVAL,
+        )
+        doc.status = DocumentStatus.APPROVED
+        self.db.flush()
+        update_workflow_stage(
+            self.db, document_id=document_id,
+            stage=ProcessingStage.ERP_POSTING,
+            agent=self.name, progress_percent=90,
+        )
+        state.set_status("APPROVED")
+        state.set_next_agent("ERP_POSTING_AGENT")
+        return state
 
     def _auto_approve_no_rule(self, state: AgentState, doc: Document, document_id: str) -> AgentState:
         log_audit(

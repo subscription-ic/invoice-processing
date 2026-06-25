@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Box, Card, CardContent, Typography, Chip, Button, Tabs, Tab,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField,
@@ -13,8 +13,10 @@ import type { Approval } from '../../types'
 
 export default function Approvals() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const documentIdFilter = searchParams.get('document_id') || ''
   const queryClient = useQueryClient()
-  const [tab, setTab] = useState(0)
+  const [tab, setTab] = useState(documentIdFilter ? 1 : 0)
   const [actionDialog, setActionDialog] = useState<{ open: boolean; approval: Approval | null; action: string }>({ open: false, approval: null, action: '' })
   const [comments, setComments] = useState('')
 
@@ -25,9 +27,15 @@ export default function Approvals() {
   })
 
   const { data: allApprovals = [], isLoading: allLoading } = useQuery<Approval[]>({
-    queryKey: ['all-approvals'],
-    queryFn: async () => { const { data } = await approvalsApi.list({ page_size: 50 }); return data },
-    enabled: tab === 1,
+    queryKey: ['all-approvals', documentIdFilter],
+    queryFn: async () => {
+      const params: Record<string, any> = { page_size: 50 }
+      if (documentIdFilter) params.document_id = documentIdFilter
+      const { data } = await approvalsApi.list(params)
+      return data
+    },
+    enabled: tab === 1 || !!documentIdFilter,
+    refetchInterval: 15_000,
   })
 
   const actionMutation = useMutation({
@@ -48,8 +56,15 @@ export default function Approvals() {
 
   const columns: GridColDef[] = [
     { field: 'document_id', headerName: 'Document', width: 200 },
-    { field: 'approval_level', headerName: 'Level', width: 80 },
-    { field: 'approver_name', headerName: 'Approver', width: 160 },
+    { field: 'rule_name', headerName: 'Reason / Rule', flex: 1, minWidth: 160,
+      renderCell: (p: GridRenderCellParams) => (
+        <Typography variant="caption" color={p.value ? 'text.primary' : 'text.disabled'}>
+          {p.value || '—'}
+        </Typography>
+      ),
+    },
+    { field: 'approval_level', headerName: 'Level', width: 70 },
+    { field: 'approver_name', headerName: 'Approver', width: 150 },
     {
       field: 'status', headerName: 'Status', width: 130,
       renderCell: (p: GridRenderCellParams) => (
@@ -90,32 +105,44 @@ export default function Approvals() {
     },
   ]
 
-  const displayData = tab === 0 ? myApprovals : allApprovals
+  const displayData = documentIdFilter ? allApprovals : (tab === 0 ? myApprovals : allApprovals)
 
   return (
     <Box>
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between' }}>
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <Box>
           <Typography variant="h5" fontWeight={700}>Approval Center</Typography>
           <Typography variant="body2" color="text.secondary">
-            Manage document approvals across the organization
+            {documentIdFilter ? 'Approvals for this document' : 'Manage document approvals across the organization'}
           </Typography>
         </Box>
-        {myApprovals.length > 0 && (
-          <Chip label={`${myApprovals.length} Pending Your Approval`} color="warning" />
-        )}
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          {documentIdFilter && (
+            <Chip
+              label={`Filtered: 1 document`}
+              color="info"
+              onDelete={() => navigate('/approvals')}
+              size="small"
+            />
+          )}
+          {myApprovals.length > 0 && (
+            <Chip label={`${myApprovals.length} Pending Your Approval`} color="warning" />
+          )}
+        </Box>
       </Box>
 
-      {myApprovals.length > 0 && tab === 0 && (
+      {myApprovals.length > 0 && tab === 0 && !documentIdFilter && (
         <Alert severity="warning" sx={{ mb: 2 }}>
           You have {myApprovals.length} pending approval(s) requiring action.
         </Alert>
       )}
 
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Tab label={`My Approvals (${myApprovals.length})`} />
-        <Tab label="All Approvals" />
-      </Tabs>
+      {!documentIdFilter && (
+        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
+          <Tab label={`My Approvals (${myApprovals.length})`} />
+          <Tab label="All Approvals" />
+        </Tabs>
+      )}
 
       <Card>
         <DataGrid

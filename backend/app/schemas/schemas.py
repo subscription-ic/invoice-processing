@@ -742,6 +742,10 @@ class ApprovalOut(BaseSchema):
     actioned_at: Optional[datetime] = None
     deadline: Optional[datetime] = None
     created_at: datetime
+    rule_name: Optional[str] = None
+    rule_amount_min: Optional[float] = None
+    rule_amount_max: Optional[float] = None
+    authority_amount: Optional[float] = None
 
 
 class ApprovalAction(BaseSchema):

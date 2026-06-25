@@ -1,11 +1,24 @@
 from __future__ import annotations
 
 import io
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List
 
 import fitz  # PyMuPDF
+
+# PyMuPDF (MuPDF C library) keeps process-level global state — font caches,
+# colour profiles, glyph atlases — that is NOT thread-safe on Windows.
+# A threading.Lock only prevents *concurrent* entry; it does not protect
+# against corruption that was already written to global state by a prior
+# concurrent call that snuck in before the lock was added.
+#
+# The only reliable fix: route ALL fitz work through a single dedicated OS
+# thread. ThreadPoolExecutor(max_workers=1) guarantees that, regardless of
+# how many pipeline threads call these functions simultaneously, the actual
+# fitz code executes serially in one thread.
+_fitz_thread = ThreadPoolExecutor(max_workers=1, thread_name_prefix="fitz")
 
 
 @dataclass
@@ -21,14 +34,7 @@ class PDFAnalysisResult:
     reason: str
 
 
-def analyze_pdf(file_path: str | Path | bytes) -> PDFAnalysisResult:
-    """
-    Analyze a PDF to determine if it is a digital (text-based) or scanned PDF.
-
-    Rules:
-    - IF total_text_length > 100 chars AND >=80% pages have text => DIGITAL (confidence 0.95)
-    - OTHERWISE => SCANNED (needs OCR)
-    """
+def _analyze_pdf_impl(file_path: str | Path | bytes) -> PDFAnalysisResult:
     if isinstance(file_path, bytes):
         doc = fitz.open(stream=file_path, filetype="pdf")
     else:
@@ -50,9 +56,6 @@ def analyze_pdf(file_path: str | Path | bytes) -> PDFAnalysisResult:
     total_text_length = len(full_text.strip())
     text_coverage_percent = (pages_with_text / total_pages * 100) if total_pages > 0 else 0
 
-    # DIGITAL if it has a meaningful text layer. A text-rich PDF (even one with
-    # a mix of text pages and an embedded scanned receipt page) is best handled
-    # by extracting its text layer directly rather than image OCR.
     is_digital = total_text_length > 200 or (total_text_length > 100 and text_coverage_percent >= 80)
 
     if is_digital:
@@ -81,8 +84,7 @@ def analyze_pdf(file_path: str | Path | bytes) -> PDFAnalysisResult:
         )
 
 
-def pdf_page_to_image(file_path: str | Path | bytes, page_num: int = 0, dpi: int = 300) -> bytes:
-    """Convert a PDF page to PNG bytes for image-based processing."""
+def _pdf_page_to_image_impl(file_path: str | Path | bytes, page_num: int, dpi: int) -> bytes:
     if isinstance(file_path, bytes):
         doc = fitz.open(stream=file_path, filetype="pdf")
     else:
@@ -96,12 +98,24 @@ def pdf_page_to_image(file_path: str | Path | bytes, page_num: int = 0, dpi: int
     return img_bytes
 
 
+def analyze_pdf(file_path: str | Path | bytes) -> PDFAnalysisResult:
+    """
+    Analyze a PDF to determine if it is digital (text-based) or scanned.
+    Runs inside the dedicated single-thread fitz executor — never concurrent.
+    """
+    return _fitz_thread.submit(_analyze_pdf_impl, file_path).result()
+
+
+def pdf_page_to_image(file_path: str | Path | bytes, page_num: int = 0, dpi: int = 300) -> bytes:
+    """Convert a PDF page to PNG bytes. Runs in the single-thread fitz executor."""
+    return _fitz_thread.submit(_pdf_page_to_image_impl, file_path, page_num, dpi).result()
+
+
 def extract_docx_text(file_path: str | Path | bytes) -> str:
     """Extract text from a DOCX file using python-docx."""
     try:
         import docx
         if isinstance(file_path, bytes):
-            import io
             doc = docx.Document(io.BytesIO(file_path))
         else:
             doc = docx.Document(str(file_path))

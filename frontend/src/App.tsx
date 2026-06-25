@@ -4,22 +4,21 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider, createTheme, CssBaseline, Box, CircularProgress } from '@mui/material'
 import { useAuthStore } from './store'
 import Layout from './components/Layout/Layout'
+import ErrorBoundary from './components/ErrorBoundary'
 import Dashboard from './pages/Dashboard/Dashboard'
 import Upload from './pages/Upload/Upload'
 import Documents from './pages/Documents/Documents'
 import DocumentDetail from './pages/Documents/DocumentDetail'
 import Approvals from './pages/Approvals/Approvals'
 import Exceptions from './pages/Exceptions/Exceptions'
+import ExceptionDetail from './pages/Exceptions/ExceptionDetail'
 import Admin from './pages/Admin/Admin'
 import Audit from './pages/Audit/Audit'
 import MockDB from './pages/MockDB/MockDB'
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: {
-      staleTime: 30_000,
-      retry: 1,
-    },
+    queries: { staleTime: 30_000, retry: 1 },
   },
 })
 
@@ -43,17 +42,14 @@ const theme = createTheme({
   },
 })
 
-// Silently authenticate in the background so the app opens without a login screen.
 function AuthBootstrap({ children }: { children: React.ReactNode }) {
   const { setAuth } = useAuthStore()
-  // Source of truth = the actual token in localStorage (not the persisted flag).
   const hasToken = !!localStorage.getItem('access_token')
   const [ready, setReady] = React.useState(hasToken)
 
   React.useEffect(() => {
     if (hasToken) { setReady(true); return }
     import('./api/client').then(({ authApi }) => {
-      // Try the simple admin user first, fall back to the seeded email user.
       authApi.login('admin', 'admin')
         .then(({ data }) => { setAuth(data.user, data.access_token); setReady(true) })
         .catch(() =>
@@ -85,7 +81,9 @@ export default function App() {
               path="/"
               element={
                 <AuthBootstrap>
-                  <Layout />
+                  <ErrorBoundary>
+                    <Layout />
+                  </ErrorBoundary>
                 </AuthBootstrap>
               }
             >
@@ -95,6 +93,7 @@ export default function App() {
               <Route path="documents/:id" element={<DocumentDetail />} />
               <Route path="approvals" element={<Approvals />} />
               <Route path="exceptions" element={<Exceptions />} />
+              <Route path="exceptions/:id" element={<ExceptionDetail />} />
               <Route path="admin" element={<Admin />} />
               <Route path="audit" element={<Audit />} />
               <Route path="mock-db" element={<MockDB />} />

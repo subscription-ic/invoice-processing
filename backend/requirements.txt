@@ -32,8 +32,8 @@ langchain-core
 PyMuPDF
 pytesseract
 
-# OpenCV — install separately below if wheel available
-# opencv-python-headless
+# OpenCV — headless build (no GUI libs needed in containers)
+opencv-python-headless
 
 # Data & Validation
 pydantic

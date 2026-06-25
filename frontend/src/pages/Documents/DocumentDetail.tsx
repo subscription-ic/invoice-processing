@@ -5,14 +5,14 @@ import {
   Table, TableBody, TableCell, TableHead, TableRow, Alert, LinearProgress,
   List, ListItem, ListItemText, Stepper, Step, StepLabel, StepContent,
   Accordion, AccordionSummary, AccordionDetails, Button, Stack, Divider,
-  Dialog, DialogTitle, DialogContent, IconButton,
+  Dialog, DialogTitle, DialogContent, IconButton, Tooltip,
 } from '@mui/material'
 import {
   ArrowBack, ExpandMore, CheckCircle, Cancel, Warning,
   TrendingUp, TrendingDown, TrendingFlat, AutoAwesome, Close, PauseCircle,
 } from '@mui/icons-material'
 import { useQuery } from '@tanstack/react-query'
-import { documentsApi } from '../../api/client'
+import { documentsApi, approvalsApi, exceptionsApi } from '../../api/client'
 import type { Document, WorkflowState, ValidationResult, MatchingResult, AuditLog } from '../../types'
 import { formatDate, formatDateTime } from '../../utils/format'
 
@@ -89,6 +89,24 @@ export default function DocumentDetail() {
     queryKey: ['explanation', id],
     queryFn: async () => { const { data } = await documentsApi.getExplanation(id!); return data },
     enabled: !!id && aiDialogOpen,
+  })
+
+  const { data: docApprovals = [] } = useQuery<any[]>({
+    queryKey: ['doc-approvals', id],
+    queryFn: async () => {
+      const { data } = await approvalsApi.list({ document_id: id, page_size: 5 })
+      return Array.isArray(data) ? data : (data?.items ?? [])
+    },
+    enabled: !!id,
+  })
+
+  const { data: docExceptions = [] } = useQuery<any[]>({
+    queryKey: ['doc-exceptions', id],
+    queryFn: async () => {
+      const { data } = await exceptionsApi.list({ document_id: id, page_size: 5 })
+      return Array.isArray(data) ? data : (data?.items ?? [])
+    },
+    enabled: !!id,
   })
 
   if (isLoading) return (
@@ -240,53 +258,175 @@ export default function DocumentDetail() {
                     status === 'ERROR'     ? 'error.main' :
                     status === 'STUCK'     ? '#e65100' : 'text.primary'
 
+                  const isApprovalStage  = stage.key === 'APPROVAL'
+                  const isExceptionStage = stage.key === 'EXCEPTION'
+                  const isInteractive    = isApprovalStage || isExceptionStage
+
+                  // ── Approval tooltip — WHY the invoice went into approval ──────────
+                  const stageTooltip = (() => {
+                    if (isApprovalStage) {
+                      const approval = docApprovals[0]
+                      const isStuck = status === 'STUCK'
+                      const invoiceAmt = doc.total_amount ? Number(doc.total_amount) : null
+                      const ruleName = approval?.rule_name
+                      const ruleMin  = approval?.rule_amount_min
+                      const ruleMax  = approval?.rule_amount_max
+                      let reason = ''
+                      if (ruleName) {
+                        reason = ruleName
+                        if (invoiceAmt && ruleMin != null) {
+                          reason += ` — invoice ₹${invoiceAmt.toLocaleString('en-IN')} exceeds the ₹${Number(ruleMin).toLocaleString('en-IN')}${ruleMax ? `–₹${Number(ruleMax).toLocaleString('en-IN')}` : '+'} approval threshold`
+                        }
+                      } else if (invoiceAmt && invoiceAmt > 0) {
+                        reason = `Invoice total ₹${invoiceAmt.toLocaleString('en-IN')} triggered the approval policy`
+                      } else {
+                        reason = 'Invoice conditions triggered the approval workflow'
+                      }
+                      return (
+                        <Box sx={{ p: 0.5, maxWidth: 280 }}>
+                          <Typography variant="caption" fontWeight={700} display="block" sx={{ mb: 0.75, color: isStuck ? '#ffb74d' : '#81c784', fontSize: 11 }}>
+                            {isStuck ? 'Why is this awaiting approval?' : status === 'COMPLETED' ? 'Approval Completed' : 'Approval Stage'}
+                          </Typography>
+                          <Typography variant="caption" display="block" sx={{ mb: 0.75, lineHeight: 1.5 }}>{reason}</Typography>
+                          {approval?.approver_name && (
+                            <Typography variant="caption" display="block" sx={{ mb: 0.3, color: '#b0bec5' }}>
+                              Pending with: <strong style={{ color: '#fff' }}>{approval.approver_name}</strong>
+                            </Typography>
+                          )}
+                          {approval?.deadline && (
+                            <Typography variant="caption" display="block" sx={{ mb: 0.3, color: new Date(approval.deadline) < new Date() ? '#ef9a9a' : '#b0bec5' }}>
+                              Due: <strong style={{ color: new Date(approval.deadline) < new Date() ? '#ef9a9a' : '#fff' }}>
+                                {new Date(approval.deadline).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}
+                              </strong>
+                            </Typography>
+                          )}
+                          <Typography variant="caption" display="block" sx={{ mt: 0.75, color: '#90caf9', fontStyle: 'italic' }}>
+                            Click to open this document's approval
+                          </Typography>
+                        </Box>
+                      )
+                    }
+
+                    if (isExceptionStage) {
+                      const exc = docExceptions[0]
+                      const isStuck = status === 'STUCK'
+                      const SEVERITY_COLOR: Record<string, string> = { CRITICAL: '#ef9a9a', HIGH: '#ffb74d', MEDIUM: '#fff59d', LOW: '#a5d6a7' }
+                      return (
+                        <Box sx={{ p: 0.5, maxWidth: 280 }}>
+                          <Typography variant="caption" fontWeight={700} display="block" sx={{ mb: 0.75, color: isStuck ? '#ffb74d' : '#81c784', fontSize: 11 }}>
+                            {isStuck ? 'Why is this an exception?' : status === 'COMPLETED' ? 'Exception Resolved' : 'Exception Stage'}
+                          </Typography>
+                          {exc ? (
+                            <>
+                              <Typography variant="caption" display="block" sx={{ mb: 0.4, fontWeight: 600 }}>{exc.title}</Typography>
+                              {exc.description && (
+                                <Typography variant="caption" display="block" sx={{ mb: 0.5, lineHeight: 1.5, color: '#ccc' }}>{exc.description}</Typography>
+                              )}
+                              <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mb: 0.5 }}>
+                                {exc.severity && (
+                                  <span style={{ fontSize: 10, fontWeight: 700, color: SEVERITY_COLOR[exc.severity] || '#fff', border: `1px solid ${SEVERITY_COLOR[exc.severity] || '#888'}`, borderRadius: 4, padding: '1px 5px' }}>
+                                    {exc.severity}
+                                  </span>
+                                )}
+                                {exc.queue && (
+                                  <span style={{ fontSize: 10, color: '#90caf9', border: '1px solid #42a5f5', borderRadius: 4, padding: '1px 5px' }}>{exc.queue}</span>
+                                )}
+                                {exc.status && (
+                                  <span style={{ fontSize: 10, color: '#b0bec5', border: '1px solid #546e7a', borderRadius: 4, padding: '1px 5px' }}>{exc.status}</span>
+                                )}
+                              </Box>
+                            </>
+                          ) : (
+                            <Typography variant="caption" display="block" sx={{ mb: 0.5 }}>
+                              Document processing was halted pending human review.
+                            </Typography>
+                          )}
+                          <Typography variant="caption" display="block" sx={{ mt: 0.75, color: '#90caf9', fontStyle: 'italic' }}>
+                            Click to open this exception
+                          </Typography>
+                        </Box>
+                      )
+                    }
+
+                    return undefined
+                  })()
+
+                  const handleStageClick = isApprovalStage
+                    ? () => navigate(`/approvals?document_id=${id}`)
+                    : isExceptionStage
+                      ? () => { const exc = docExceptions[0]; if (exc) navigate(`/exceptions/${exc.id}`); else navigate('/exceptions') }
+                      : undefined
+
+                  const stageNode = (
+                    <Box
+                      sx={{
+                        display: 'flex', flexDirection: 'column', alignItems: 'center',
+                        minWidth: 82, maxWidth: 82,
+                        ...(isInteractive && { cursor: 'pointer' }),
+                      }}
+                      onClick={handleStageClick}
+                    >
+                      <Box sx={{
+                        width: 36, height: 36, borderRadius: '50%',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        bgcolor: circleBg,
+                        border: `2px solid ${circleColor}`,
+                        boxShadow:
+                          status === 'RUNNING' ? `0 0 0 4px rgba(25,118,210,0.14)` :
+                          status === 'STUCK'   ? `0 0 0 4px rgba(230,81,0,0.18)` : 'none',
+                        transition: 'all 0.3s',
+                        ...(isInteractive && { '&:hover': { opacity: 0.8 } }),
+                      }}>
+                        {status === 'COMPLETED' && <CheckCircle    sx={{ fontSize: 18, color: '#4caf50' }} />}
+                        {status === 'ERROR'     && <Cancel         sx={{ fontSize: 18, color: '#f44336' }} />}
+                        {status === 'RUNNING'   && <CircularProgress size={16} color="primary" />}
+                        {status === 'STUCK'     && <PauseCircle    sx={{ fontSize: 18, color: '#e65100' }} />}
+                        {status === 'WAITING'   && <Typography variant="caption" sx={{ fontSize: 11, color: '#bdbdbd', fontWeight: 700 }}>{visIdx + 1}</Typography>}
+                      </Box>
+                      <Typography sx={{
+                        fontSize: 10, fontWeight: status === 'RUNNING' || status === 'STUCK' ? 700 : 600, mt: 0.6,
+                        color: labelColor, textAlign: 'center', lineHeight: 1.3, px: 0.5,
+                      }}>
+                        {stage.label}
+                      </Typography>
+                      <Typography sx={{
+                        fontSize: 9, textAlign: 'center', lineHeight: 1.2, mt: 0.25, px: 0.5,
+                        color: status === 'WAITING' ? '#d0d0d0' : '#9e9e9e', fontStyle: 'italic',
+                      }}>
+                        {stage.agent}
+                      </Typography>
+                      {timedEntry?.started_at && status !== 'WAITING' && (
+                        <Typography sx={{ fontSize: 8, color: '#bdbdbd', textAlign: 'center', mt: 0.3 }}>
+                          {new Date(timedEntry.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </Typography>
+                      )}
+                    </Box>
+                  )
+
+                  const connector = visIdx < visibleStages.length - 1 ? (
+                    <Box sx={{
+                      flexShrink: 0, width: 20, height: 2, mt: '17px',
+                      bgcolor:
+                        status === 'COMPLETED' ? '#4caf50' :
+                        status === 'ERROR'     ? '#f44336' :
+                        status === 'STUCK'     ? '#e65100' : '#e0e0e0',
+                      transition: 'background-color 0.4s',
+                    }} />
+                  ) : null
+
                   return (
                     <React.Fragment key={stage.key}>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 82, maxWidth: 82 }}>
-                        <Box sx={{
-                          width: 36, height: 36, borderRadius: '50%',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          bgcolor: circleBg,
-                          border: `2px solid ${circleColor}`,
-                          boxShadow:
-                            status === 'RUNNING' ? `0 0 0 4px rgba(25,118,210,0.14)` :
-                            status === 'STUCK'   ? `0 0 0 4px rgba(230,81,0,0.18)` : 'none',
-                          transition: 'all 0.3s',
-                        }}>
-                          {status === 'COMPLETED' && <CheckCircle    sx={{ fontSize: 18, color: '#4caf50' }} />}
-                          {status === 'ERROR'     && <Cancel         sx={{ fontSize: 18, color: '#f44336' }} />}
-                          {status === 'RUNNING'   && <CircularProgress size={16} color="primary" />}
-                          {status === 'STUCK'     && <PauseCircle    sx={{ fontSize: 18, color: '#e65100' }} />}
-                          {status === 'WAITING'   && <Typography variant="caption" sx={{ fontSize: 11, color: '#bdbdbd', fontWeight: 700 }}>{visIdx + 1}</Typography>}
-                        </Box>
-                        <Typography sx={{
-                          fontSize: 10, fontWeight: status === 'RUNNING' || status === 'STUCK' ? 700 : 600, mt: 0.6,
-                          color: labelColor, textAlign: 'center', lineHeight: 1.3, px: 0.5,
-                        }}>
-                          {stage.label}
-                        </Typography>
-                        <Typography sx={{
-                          fontSize: 9, textAlign: 'center', lineHeight: 1.2, mt: 0.25, px: 0.5,
-                          color: status === 'WAITING' ? '#d0d0d0' : '#9e9e9e', fontStyle: 'italic',
-                        }}>
-                          {stage.agent}
-                        </Typography>
-                        {timedEntry?.started_at && status !== 'WAITING' && (
-                          <Typography sx={{ fontSize: 8, color: '#bdbdbd', textAlign: 'center', mt: 0.3 }}>
-                            {new Date(timedEntry.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </Typography>
-                        )}
-                      </Box>
-                      {visIdx < visibleStages.length - 1 && (
-                        <Box sx={{
-                          flexShrink: 0, width: 20, height: 2, mt: '17px',
-                          bgcolor:
-                            status === 'COMPLETED' ? '#4caf50' :
-                            status === 'ERROR'     ? '#f44336' :
-                            status === 'STUCK'     ? '#e65100' : '#e0e0e0',
-                          transition: 'background-color 0.4s',
-                        }} />
-                      )}
+                      {isInteractive ? (
+                        <Tooltip
+                          title={stageTooltip}
+                          placement="bottom"
+                          arrow
+                          componentsProps={{ tooltip: { sx: { bgcolor: '#1a237e', maxWidth: 300 } }, arrow: { sx: { color: '#1a237e' } } }}
+                        >
+                          {stageNode}
+                        </Tooltip>
+                      ) : stageNode}
+                      {connector}
                     </React.Fragment>
                   )
                 })

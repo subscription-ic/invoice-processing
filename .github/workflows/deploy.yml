@@ -1,0 +1,72 @@
+name: Build & Deploy to Azure Container Apps
+
+# Runs on every push to main. Builds both images in ACR, then rolls the new
+# images onto the existing Container Apps. The apps must already exist
+# (create them once with infra/deploy.ps1).
+#
+# Required GitHub repo secrets (Settings > Secrets and variables > Actions):
+#   AZURE_CREDENTIALS  - output of:
+#        az ad sp create-for-rbac --name invoice-p2p-ci --role contributor \
+#          --scopes /subscriptions/<SUB_ID>/resourceGroups/invoice-p2p-rg \
+#          --sdk-auth
+#   ACR_NAME           - e.g. invoicep2pacr
+#   RESOURCE_GROUP     - e.g. invoice-p2p-rg
+#   BACKEND_URL        - e.g. https://invoice-backend.<region>.azurecontainerapps.io
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  IMAGE_BACKEND: invoice-backend
+  IMAGE_FRONTEND: invoice-frontend
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Build backend image in ACR
+        run: |
+          az acr build \
+            --registry ${{ secrets.ACR_NAME }} \
+            --image ${{ env.IMAGE_BACKEND }}:${{ github.sha }} \
+            --image ${{ env.IMAGE_BACKEND }}:latest \
+            --file backend/Dockerfile .
+
+      - name: Build frontend image in ACR
+        run: |
+          az acr build \
+            --registry ${{ secrets.ACR_NAME }} \
+            --image ${{ env.IMAGE_FRONTEND }}:${{ github.sha }} \
+            --image ${{ env.IMAGE_FRONTEND }}:latest \
+            --build-arg VITE_API_URL=${{ secrets.BACKEND_URL }} \
+            --file frontend/Dockerfile ./frontend
+
+      - name: Deploy backend
+        run: |
+          az containerapp update -g ${{ secrets.RESOURCE_GROUP }} -n invoice-backend \
+            --image ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_BACKEND }}:${{ github.sha }}
+
+      - name: Deploy worker
+        run: |
+          az containerapp update -g ${{ secrets.RESOURCE_GROUP }} -n invoice-worker \
+            --image ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_BACKEND }}:${{ github.sha }}
+
+      - name: Deploy beat
+        run: |
+          az containerapp update -g ${{ secrets.RESOURCE_GROUP }} -n invoice-beat \
+            --image ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_BACKEND }}:${{ github.sha }}
+
+      - name: Deploy frontend
+        run: |
+          az containerapp update -g ${{ secrets.RESOURCE_GROUP }} -n invoice-frontend \
+            --image ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_FRONTEND }}:${{ github.sha }}

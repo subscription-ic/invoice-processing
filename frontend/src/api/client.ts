@@ -90,9 +90,16 @@ export const approvalsApi = {
 }
 
 // Exceptions
+/** Returns the direct URL for streaming the raw uploaded file (PDF/image). */
+export function documentFileUrl(documentId: string): string {
+  const base = import.meta.env.VITE_API_URL || window.location.origin
+  return `${base}/api/v1/documents/${documentId}/file`
+}
+
 export const exceptionsApi = {
   list: (params?: object) => apiClient.get('/exceptions', { params }),
   get: (id: string) => apiClient.get(`/exceptions/${id}`),
+  summary: (id: string) => apiClient.get(`/exceptions/${id}/summary`),
   resolve: (id: string, data: object) => apiClient.post(`/exceptions/${id}/resolve`, data),
   assign: (id: string, data: object) => apiClient.post(`/exceptions/${id}/assign`, data),
 }

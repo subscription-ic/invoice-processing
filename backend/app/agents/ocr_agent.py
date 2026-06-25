@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from pathlib import Path
 
 from PIL import Image
@@ -18,6 +19,10 @@ try:
 except Exception:
     pytesseract = None  # type: ignore
     _HAS_TESSERACT = False
+
+# pytesseract on Windows spawns the Tesseract binary as a subprocess using a
+# temp file. Concurrent calls can collide on that temp path. Serialise OCR runs.
+_tesseract_lock = threading.Lock()
 
 from sqlalchemy.orm import Session
 
@@ -142,7 +147,8 @@ class OCRAgent(BaseAgent):
 
     def _tesseract_ocr(self, image_bytes: bytes) -> tuple[str, float]:
         img = Image.open(io.BytesIO(image_bytes))
-        data = pytesseract.image_to_data(img, output_type=pytesseract.Output.DICT, lang="eng")
+        with _tesseract_lock:
+            data = pytesseract.image_to_data(img, output_type=pytesseract.Output.DICT, lang="eng")
 
         texts = []
         confidences = []

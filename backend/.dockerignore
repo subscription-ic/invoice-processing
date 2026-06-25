@@ -1,0 +1,26 @@
+# Virtual envs / caches
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Local runtime artifacts
+*.log
+celery.err.log
+celery.out.log
+uvicorn.err.log
+uvicorn.out.log
+
+# Local uploads (created fresh in container / mounted volume)
+uploads/
+
+# Tests not needed in the image
+tests/
+
+# Misc
+.env
+.git/

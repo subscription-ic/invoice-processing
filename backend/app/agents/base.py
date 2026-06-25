@@ -75,27 +75,29 @@ class BaseAgent(ABC):
 
         self.logger.info(f"[{self.name}] Starting for document {document_id or '(new)'}")
 
-        # Only touch workflow/audit tables if the document already exists.
-        if document_id:
-            update_workflow_stage(
-                self.db,
-                document_id=document_id,
-                stage=self.name,
-                agent=self.name,
-                progress_percent=self.progress_on_entry,
-            )
-            log_audit(
-                self.db,
-                document_id=document_id,
-                entity_type="WORKFLOW",
-                entity_id=document_id,
-                action="AGENT_STARTED",
-                agent=self.name,
-                log_metadata={"state_keys": list(state.keys())},
-                stage=self.name,
-            )
-
         try:
+            # Only touch workflow/audit tables if the document already exists.
+            # Placed inside the try block so a DB/library error here is caught
+            # and marks the doc FAILED rather than crashing the whole pipeline.
+            if document_id:
+                update_workflow_stage(
+                    self.db,
+                    document_id=document_id,
+                    stage=self.name,
+                    agent=self.name,
+                    progress_percent=self.progress_on_entry,
+                )
+                log_audit(
+                    self.db,
+                    document_id=document_id,
+                    entity_type="WORKFLOW",
+                    entity_id=document_id,
+                    action="AGENT_STARTED",
+                    agent=self.name,
+                    log_metadata={"state_keys": list(state.keys())},
+                    stage=self.name,
+                )
+
             result_state = self._execute(state)
 
             # Re-read the document_id — intake sets it during _execute.
@@ -173,6 +175,136 @@ class BaseAgent(ABC):
         return OpenAI(api_key=settings.OPENAI_API_KEY)
 
     @staticmethod
+    def _openai_call_with_retry(fn, max_retries: int = 4):
+        """Call an OpenAI API function with exponential back-off on rate-limit errors."""
+        import time
+        import openai
+        for attempt in range(max_retries):
+            try:
+                return fn()
+            except openai.RateLimitError:
+                if attempt == max_retries - 1:
+                    raise
+                wait = (2 ** attempt) * 5   # 5 → 10 → 20 → 40 s
+                logger.warning("OpenAI rate limit hit; retrying in %ss (attempt %d/%d)",
+                               wait, attempt + 1, max_retries)
+                time.sleep(wait)
+            except openai.APITimeoutError:
+                if attempt == max_retries - 1:
+                    raise
+                time.sleep(5)
+
+    @staticmethod
+    def _repair_truncated_json(s: str) -> Dict[str, Any]:
+        """
+        Repair a JSON string cut off mid-stream.
+
+        Three attempts in order:
+          1. Close any open string quote, then close all open brackets.
+             Handles the common case: truncation inside a string VALUE.
+          2. Strip back to the last position where a complete element ended
+             (after a '}', ']', or a comma between items), then close brackets.
+             Handles truncation inside a KEY name (which leaves an orphan key).
+          3. Walk backward to find the last complete '}' or ']' and close from there.
+             Last-resort fallback.
+        """
+        # ── Pass 1: collect parse state ──────────────────────────────────────
+        in_str = False
+        esc = False
+        stack: list[str] = []
+        # last_safe: index of the end of the last "safe" chunk (complete element,
+        # closing bracket, or the index of a comma — we'll rstrip it later).
+        last_safe = 0
+
+        i = 0
+        while i < len(s):
+            c = s[i]
+            if esc:
+                esc = False; i += 1; continue
+            if c == '\\' and in_str:
+                esc = True; i += 1; continue
+            if c == '"':
+                if in_str:
+                    in_str = False
+                    # Mark safe only when this closing quote ends a VALUE
+                    # (next non-space char is not ':').
+                    j = i + 1
+                    while j < len(s) and s[j] in ' \t\r\n':
+                        j += 1
+                    if j >= len(s) or s[j] != ':':
+                        last_safe = i + 1
+                else:
+                    in_str = True
+                i += 1; continue
+            if in_str:
+                i += 1; continue
+            # Outside strings:
+            if c in '{[':
+                stack.append(c)
+            elif c in '}]' and stack:
+                stack.pop()
+                last_safe = i + 1
+            elif c == ',' and stack:
+                # Position of comma — s[:i] gives everything before it.
+                last_safe = i
+            i += 1
+
+        def _recount_stack(text: str) -> list[str]:
+            stk: list[str] = []
+            s_in = False; s_esc = False
+            for ch in text:
+                if s_esc:
+                    s_esc = False; continue
+                if ch == '\\' and s_in:
+                    s_esc = True; continue
+                if ch == '"':
+                    s_in = not s_in; continue
+                if s_in:
+                    continue
+                if ch in '{[':
+                    stk.append(ch)
+                elif ch in '}]' and stk:
+                    stk.pop()
+            return stk
+
+        def _close(text: str, stk: list) -> str:
+            suffix = ''.join('}' if c == '{' else ']' for c in reversed(stk))
+            return text.rstrip(',').rstrip() + suffix
+
+        # ── Attempt 1: close open string (if any) + close brackets ───────────
+        # If the last char was a backslash (esc=True), adding '"' produces '\"'
+        # which keeps the string open. Drop the dangling backslash instead.
+        if in_str and esc:
+            a1 = s[:-1] + '"'
+        elif in_str:
+            a1 = s + '"'
+        else:
+            a1 = s
+        try:
+            return json.loads(_close(a1, stack))
+        except json.JSONDecodeError:
+            pass
+
+        # ── Attempt 2: strip to last safe position + close remaining stack ───
+        if last_safe > 0:
+            a2 = s[:last_safe]
+            try:
+                return json.loads(_close(a2, _recount_stack(a2)))
+            except json.JSONDecodeError:
+                pass
+
+        # ── Attempt 3: walk backward to find last complete bracket ───────────
+        for k in range(len(s) - 1, -1, -1):
+            if s[k] in '}]':
+                candidate = s[:k + 1]
+                try:
+                    return json.loads(_close(candidate, _recount_stack(candidate)))
+                except json.JSONDecodeError:
+                    continue
+
+        raise json.JSONDecodeError("Could not repair JSON", s, len(s))
+
+    @staticmethod
     def _call_openai_json(
         system_prompt: str,
         user_prompt: str,
@@ -181,17 +313,50 @@ class BaseAgent(ABC):
         max_tokens: int = 4096,
     ) -> Dict[str, Any]:
         client = BaseAgent._openai_client()
-        response = client.chat.completions.create(
-            model=model,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            response_format={"type": "json_object"},
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-        )
-        return json.loads(response.choices[0].message.content)
+
+        def _call(tokens: int = max_tokens):
+            response = client.chat.completions.create(
+                model=model,
+                temperature=temperature,
+                max_tokens=tokens,
+                response_format={"type": "json_object"},
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+            )
+            choice = response.choices[0]
+            content = choice.message.content or ""
+
+            if choice.finish_reason == "length":
+                logger.warning(
+                    "OpenAI response truncated (finish_reason=length, content_len=%d, "
+                    "token_limit=%d); attempting JSON repair", len(content), tokens
+                )
+
+            # Always try json.loads first; on ANY parse failure, attempt repair
+            # then retry with a larger token budget. This catches both
+            # finish_reason="length" (hard cut-off) and rare cases where the
+            # model stops mid-JSON even with finish_reason="stop".
+            try:
+                return json.loads(content)
+            except json.JSONDecodeError:
+                logger.warning(
+                    "JSON parse failed (finish_reason=%s, content_len=%d); "
+                    "attempting repair", choice.finish_reason, len(content)
+                )
+                try:
+                    return BaseAgent._repair_truncated_json(content)
+                except json.JSONDecodeError:
+                    if tokens < 16384:
+                        new_tokens = min(tokens * 2, 16384)
+                        logger.warning(
+                            "JSON repair failed; retrying with %d tokens", new_tokens
+                        )
+                        return _call(new_tokens)
+                    raise
+
+        return BaseAgent._openai_call_with_retry(lambda: _call())
 
     @staticmethod
     def _call_openai_vision_json(
@@ -203,23 +368,27 @@ class BaseAgent(ABC):
         import base64
         client = BaseAgent._openai_client()
         b64_image = base64.b64encode(image_bytes).decode("utf-8")
-        response = client.chat.completions.create(
-            model=model,
-            temperature=0.0,
-            max_tokens=512,
-            response_format={"type": "json_object"},
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": user_prompt},
-                        {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64_image}"}},
-                    ],
-                },
-            ],
-        )
-        return json.loads(response.choices[0].message.content)
+
+        def _call():
+            response = client.chat.completions.create(
+                model=model,
+                temperature=0.0,
+                max_tokens=512,
+                response_format={"type": "json_object"},
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": user_prompt},
+                            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64_image}"}},
+                        ],
+                    },
+                ],
+            )
+            return json.loads(response.choices[0].message.content)
+
+        return BaseAgent._openai_call_with_retry(_call)
 
     @staticmethod
     def _call_openai_vision_text(
@@ -231,19 +400,23 @@ class BaseAgent(ABC):
         import base64
         client = BaseAgent._openai_client()
         b64_image = base64.b64encode(image_bytes).decode("utf-8")
-        response = client.chat.completions.create(
-            model=model,
-            temperature=0.0,
-            max_tokens=4096,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": user_prompt},
-                        {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64_image}"}},
-                    ],
-                },
-            ],
-        )
-        return response.choices[0].message.content
+
+        def _call():
+            response = client.chat.completions.create(
+                model=model,
+                temperature=0.0,
+                max_tokens=4096,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": user_prompt},
+                            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64_image}"}},
+                        ],
+                    },
+                ],
+            )
+            return response.choices[0].message.content
+
+        return BaseAgent._openai_call_with_retry(_call)

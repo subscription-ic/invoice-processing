@@ -24,7 +24,7 @@ export default function Exceptions() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [queueFilter, setQueueFilter] = useState('')
-  const [statusFilter, setStatusFilter] = useState('OPEN')
+  const [statusFilter, setStatusFilter] = useState('')
   const [resolveDialog, setResolveDialog] = useState<{ open: boolean; exception: Exception | null }>({ open: false, exception: null })
   const [resolution, setResolution] = useState('')
 
@@ -51,13 +51,13 @@ export default function Exceptions() {
     },
   })
 
-  // Get current user to "take" the exception (assign to self → IN_PROGRESS)
+  // Claim the exception (assign to self → IN_PROGRESS) then open the detail page
   const startMutation = useMutation({
     mutationFn: (id: string) => {
       const user = JSON.parse(localStorage.getItem('user') || '{}')
       return exceptionsApi.assign(id, { assigned_to: user.id })
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['exceptions'] }),
+    onSuccess: (_data, id) => navigate(`/exceptions/${id}`),
   })
 
   const columns: GridColDef[] = [
@@ -99,8 +99,8 @@ export default function Exceptions() {
       field: 'actions', headerName: 'Actions', width: 160, sortable: false,
       renderCell: (p: GridRenderCellParams) => (
         <Box sx={{ display: 'flex', gap: 0.5 }}>
-          <Tooltip title="View Document">
-            <IconButton size="small" onClick={() => navigate(`/documents/${p.row.document_id}`)}>
+          <Tooltip title="View Exception Detail">
+            <IconButton size="small" color="primary" onClick={() => navigate(`/exceptions/${p.row.id}`)}>
               <Visibility fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -149,8 +149,8 @@ export default function Exceptions() {
         <FormControl size="small" sx={{ minWidth: 140 }}>
           <InputLabel>Status</InputLabel>
           <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} label="Status">
-            <MenuItem value="">All</MenuItem>
-            {['OPEN', 'IN_PROGRESS', 'RESOLVED', 'ESCALATED', 'CLOSED'].map((s) => (
+            <MenuItem value="">All Statuses</MenuItem>
+            {['OPEN', 'IN_PROGRESS', 'ESCALATED', 'RESOLVED', 'CLOSED'].map((s) => (
               <MenuItem key={s} value={s}>{s.replace(/_/g, ' ')}</MenuItem>
             ))}
           </Select>
@@ -167,7 +167,11 @@ export default function Exceptions() {
           loading={isLoading}
           autoHeight
           disableRowSelectionOnClick
-          sx={{ border: 'none' }}
+          onRowClick={(params) => navigate(`/exceptions/${params.row.id}`)}
+          sx={{
+            border: 'none',
+            '& .MuiDataGrid-row': { cursor: 'pointer' },
+          }}
         />
       </Card>
 

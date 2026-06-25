@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+from concurrent.futures import ThreadPoolExecutor
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, desc
@@ -10,8 +12,10 @@ from datetime import datetime, timezone
 from app.core.database import get_async_session
 from app.core.security import get_current_user
 from app.models.models import Approval, ApprovalStatus, Document, DocumentStatus, Notification, User
-from sqlalchemy.orm import selectinload
 from app.schemas.schemas import ApprovalAction, ApprovalOut
+
+logger = logging.getLogger(__name__)
+_post_approval_pool = ThreadPoolExecutor(max_workers=4, thread_name_prefix="post-approval")
 
 router = APIRouter(prefix="/approvals", tags=["Approvals"])
 
@@ -22,7 +26,11 @@ async def my_approvals(
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user),
 ):
-    q = select(Approval).options(selectinload(Approval.document), selectinload(Approval.approver)).where(
+    q = select(Approval).options(
+        selectinload(Approval.document),
+        selectinload(Approval.approver),
+        selectinload(Approval.rule),
+    ).where(
         (Approval.approver_id == str(current_user.id)) |
         (Approval.delegate_id == str(current_user.id))
     )
@@ -43,7 +51,11 @@ async def list_approvals(
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user),
 ):
-    q = select(Approval).options(selectinload(Approval.document), selectinload(Approval.approver))
+    q = select(Approval).options(
+        selectinload(Approval.document),
+        selectinload(Approval.approver),
+        selectinload(Approval.rule),
+    )
     if status:
         q = q.where(Approval.status == status)
     if document_id:
@@ -65,7 +77,11 @@ async def action_approval(
 ):
     result = await db.execute(
         select(Approval)
-        .options(selectinload(Approval.document), selectinload(Approval.approver))
+        .options(
+            selectinload(Approval.document),
+            selectinload(Approval.approver),
+            selectinload(Approval.rule),
+        )
         .where(Approval.id == approval_id)
     )
     approval = result.scalar_one_or_none()
@@ -114,11 +130,13 @@ async def action_approval(
             )
             db.add(notif)
         else:
-            # All levels approved — trigger ERP posting
+            # All levels approved — trigger ERP posting in background thread
             if doc:
                 doc.status = DocumentStatus.APPROVED
-            from app.tasks.pipeline import run_post_approval_pipeline
-            run_post_approval_pipeline.delay(str(approval.document_id))
+            from app.tasks.pipeline import execute_post_approval_pipeline
+            doc_id_str = str(approval.document_id)
+            _post_approval_pool.submit(execute_post_approval_pipeline, doc_id_str)
+            logger.info("Triggered post-approval pipeline for document %s", doc_id_str)
     else:
         # Rejected
         if doc:
@@ -152,6 +170,7 @@ async def delegate_approval(
 
 def _map_approval(a: Approval, current_user: User) -> ApprovalOut:
     doc_ref = (a.document.document_id if hasattr(a, "document") and a.document else None) or str(a.document_id)
+    rule = getattr(a, "rule", None)
     return ApprovalOut(
         id=str(a.id),
         document_id=doc_ref,
@@ -165,4 +184,8 @@ def _map_approval(a: Approval, current_user: User) -> ApprovalOut:
         actioned_at=a.actioned_at,
         deadline=a.deadline,
         created_at=a.created_at,
+        rule_name=rule.name if rule else None,
+        rule_amount_min=float(rule.amount_min) if rule and rule.amount_min is not None else None,
+        rule_amount_max=float(rule.amount_max) if rule and rule.amount_max is not None else None,
+        authority_amount=float(a.authority_amount) if a.authority_amount is not None else None,
     )

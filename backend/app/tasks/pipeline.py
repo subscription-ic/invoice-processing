@@ -33,18 +33,13 @@ def _clean_state(state) -> Dict[str, Any]:
     return out
 
 
-@celery_app.task(
-    name="app.tasks.pipeline.run_document_pipeline",
-    bind=True,
-    max_retries=3,
-    default_retry_delay=30,
-    queue="pipeline",
-    acks_late=True,
-)
-def run_document_pipeline(self: Task, state: Dict[str, Any]) -> Dict[str, Any]:
+def execute_pipeline(state: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Main pipeline task. Orchestrates all 12 agents sequentially.
-    State is passed between agents as a dict.
+    Pure Python function — the actual pipeline logic, no Celery machinery.
+
+    Call this directly from threads or synchronous code. The Celery task
+    `run_document_pipeline` below is a thin wrapper around this function
+    for when a real Celery worker is running.
     """
     from app.agents.intake_agent import IntakeAgent
     from app.agents.classification_agent import ClassificationAgent
@@ -59,10 +54,6 @@ def run_document_pipeline(self: Task, state: Dict[str, Any]) -> Dict[str, Any]:
     from app.agents.approval_agent import ApprovalAgent
     from app.agents.erp_posting_agent import ERPPostingAgent
     from app.agents.payment_agent import PaymentAgent
-    from app.models.models import BusinessProfile, DocType
-
-    agent_state = AgentState(state)
-    db = _get_db()
 
     AGENT_MAP = {
         "CLASSIFICATION_AGENT": ClassificationAgent,
@@ -78,6 +69,9 @@ def run_document_pipeline(self: Task, state: Dict[str, Any]) -> Dict[str, Any]:
         "ERP_POSTING_AGENT": ERPPostingAgent,
         "PAYMENT_AGENT": PaymentAgent,
     }
+
+    agent_state = AgentState(state)
+    db = _get_db()
 
     try:
         # ── Stage 1: Intake (skipped when the API already created the document) ──
@@ -98,33 +92,51 @@ def run_document_pipeline(self: Task, state: Dict[str, Any]) -> Dict[str, Any]:
             next_agent_name = agent_state.next_agent
 
             if next_agent_name not in AGENT_MAP:
-                logger.error(f"Unknown agent: {next_agent_name}")
+                logger.error("Unknown agent: %s", next_agent_name)
                 break
 
             AgentClass = AGENT_MAP[next_agent_name]
             agent = AgentClass(db)
             agent_state = agent.run(agent_state)
 
-            # Stop if human review required or completed
             if agent_state.status in ("HUMAN_REVIEW_REQUIRED", "COMPLETED", "PENDING_APPROVAL"):
                 break
 
             if agent_state.status == "FAILED":
-                logger.error(f"Pipeline failed at {next_agent_name}: {agent_state.get('error')}")
+                logger.error("Pipeline failed at %s: %s", next_agent_name, agent_state.get("error"))
                 break
 
         return _clean_state(agent_state)
 
     except SQLAlchemyError as exc:
-        logger.error(f"Database error in pipeline: {exc}", exc_info=True)
+        logger.error("Database error in pipeline: %s", exc, exc_info=True)
         try:
             db.rollback()
         except Exception:
             pass
-        self.retry(exc=exc)
+        _doc_id = state.get("document_id")
+        if _doc_id:
+            try:
+                _fresh = _get_db()
+                try:
+                    from app.models.models import Document, DocumentStatus, WorkflowState
+                    _d = _fresh.query(Document).filter(Document.id == _doc_id).first()
+                    if _d and _d.status == DocumentStatus.PROCESSING:
+                        _d.status = DocumentStatus.FAILED
+                    _ws = _fresh.query(WorkflowState).filter(
+                        WorkflowState.document_id == _doc_id
+                    ).first()
+                    if _ws:
+                        _ws.error_message = f"DB error: {exc}"
+                    _fresh.commit()
+                finally:
+                    _fresh.close()
+            except Exception:
+                pass
+        raise
 
     except Exception as exc:
-        logger.error(f"Unexpected pipeline error: {exc}", exc_info=True)
+        logger.error("Unexpected pipeline error: %s", exc, exc_info=True)
         try:
             db.rollback()
         except Exception:
@@ -139,11 +151,29 @@ def run_document_pipeline(self: Task, state: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @celery_app.task(
-    name="app.tasks.pipeline.run_post_approval_pipeline",
+    name="app.tasks.pipeline.run_document_pipeline",
+    bind=True,
+    max_retries=3,
+    default_retry_delay=30,
     queue="pipeline",
+    acks_late=True,
 )
-def run_post_approval_pipeline(document_id: str) -> Dict[str, Any]:
-    """Trigger ERP posting and payment scheduling after approval."""
+def run_document_pipeline(self: Task, state: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Celery task wrapper around execute_pipeline.
+    Only used when a real Celery worker is running.
+    Direct (in-process) callers should use execute_pipeline() instead —
+    Celery's __call__ machinery requires request_stack to be initialized
+    by the worker, which never happens in plain threads.
+    """
+    return execute_pipeline(state)
+
+
+def execute_post_approval_pipeline(document_id: str) -> Dict[str, Any]:
+    """
+    Pure Python — run ERP posting and payment after a human approval.
+    Call this directly from threads; never call the Celery task directly.
+    """
     from app.agents.erp_posting_agent import ERPPostingAgent
     from app.agents.payment_agent import PaymentAgent
 
@@ -159,8 +189,20 @@ def run_post_approval_pipeline(document_id: str) -> Dict[str, Any]:
             state = payment_agent.run(state)
 
         return dict(state)
+    except Exception as exc:
+        logger.exception("Post-approval pipeline failed for document %s: %s", document_id, exc)
+        return {"error": str(exc)}
     finally:
         db.close()
+
+
+@celery_app.task(
+    name="app.tasks.pipeline.run_post_approval_pipeline",
+    queue="pipeline",
+)
+def run_post_approval_pipeline(document_id: str) -> Dict[str, Any]:
+    """Celery wrapper — delegates to execute_post_approval_pipeline."""
+    return execute_post_approval_pipeline(document_id)
 
 
 @celery_app.task(name="app.tasks.pipeline.update_payment_statuses", queue="default")

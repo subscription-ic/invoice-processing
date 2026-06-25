@@ -24,7 +24,7 @@
   },
   "invoice": {
     "invoice_number": "AOT/25-26/3325",
-    "invoice_date": "2026-03-17",
+    "invoice_date": null,
     "due_date": "2026-04-16",
     "payment_terms": "DUE ON 16-04-2026",
     "place_of_supply": "Haryana",

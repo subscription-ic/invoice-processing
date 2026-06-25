@@ -18,13 +18,13 @@ import { dashboardApi } from '../../api/client'
 const DRAWER_WIDTH = 260
 
 const NAV_ITEMS = [
-  { label: 'Dashboard', icon: <Dashboard />, path: '/' },
-  { label: 'Upload', icon: <CloudUpload />, path: '/upload' },
-  { label: 'Documents', icon: <Description />, path: '/documents' },
-  { label: 'Approvals', icon: <CheckCircle />, path: '/approvals' },
-  { label: 'Exceptions', icon: <Warning />, path: '/exceptions' },
-  { label: 'Audit Trail', icon: <History />, path: '/audit' },
-  { label: 'Mock ERP DB', icon: <Settings />, path: '/admin' },
+  { label: 'Dashboard',    icon: <Dashboard />,   path: '/'           },
+  { label: 'Upload',       icon: <CloudUpload />, path: '/upload'     },
+  { label: 'Documents',    icon: <Description />, path: '/documents'  },
+  { label: 'Approvals',    icon: <CheckCircle />, path: '/approvals'  },
+  { label: 'Exceptions',   icon: <Warning />,     path: '/exceptions' },
+  { label: 'Audit Trail',  icon: <History />,     path: '/audit'      },
+  { label: 'Mock ERP DB',  icon: <Settings />,    path: '/admin'      },
 ]
 
 export default function Layout() {

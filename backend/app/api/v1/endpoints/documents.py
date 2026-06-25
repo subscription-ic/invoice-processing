@@ -41,7 +41,7 @@ async def upload_document(
     import uuid as _uuid
     from datetime import datetime, timezone
     from pathlib import Path
-    from app.tasks.pipeline import run_document_pipeline
+    from app.tasks.pipeline import execute_pipeline
     from app.core.config import settings
     from app.tools.file_validation import validate_file
     from app.models.models import ProcessingStage
@@ -113,12 +113,37 @@ async def upload_document(
     task_id = f"thread-{doc_ref}"
 
     def _run_pipeline(pipeline_state: dict) -> None:
+        import traceback as _tb
+        _log = logging.getLogger("pipeline")
         try:
-            run_document_pipeline(pipeline_state)
+            execute_pipeline(pipeline_state)
         except Exception as _exc:
-            logging.getLogger("pipeline").error(
-                "Pipeline error for %s: %s", doc_ref, _exc, exc_info=True
-            )
+            _full_tb = _tb.format_exc()
+            _log.error("Pipeline error for %s: %s\n%s", doc_ref, _exc, _full_tb)
+            _doc_id = pipeline_state.get("document_id")
+            if _doc_id:
+                try:
+                    from app.core.database import SyncSessionLocal
+                    from app.models.models import Document, DocumentStatus, WorkflowState
+                    _db = SyncSessionLocal()
+                    try:
+                        _doc = _db.query(Document).filter(Document.id == _doc_id).first()
+                        if _doc and _doc.status == DocumentStatus.PROCESSING:
+                            _doc.status = DocumentStatus.FAILED
+                        _ws = _db.query(WorkflowState).filter(
+                            WorkflowState.document_id == _doc_id
+                        ).first()
+                        if _ws and not _ws.error_message:
+                            # Store the full traceback so the UI can show exactly
+                            # which library line raises the error.
+                            _ws.error_message = (
+                                f"Pipeline crashed: {_exc}\n\n--- Traceback ---\n{_full_tb}"
+                            )
+                        _db.commit()
+                    finally:
+                        _db.close()
+                except Exception as _db_exc:
+                    _log.error("Could not mark doc %s as FAILED: %s", _doc_id, _db_exc)
 
     _pipeline_pool.submit(_run_pipeline, state)
 
