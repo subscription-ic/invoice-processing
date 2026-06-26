@@ -40,6 +40,73 @@ function TabPanel({ children, value, index }: { children: React.ReactNode; value
   return value === index ? <Box sx={{ pt: 2 }}>{children}</Box> : null
 }
 
+// ── Human-readable rendering helpers (no raw JSON shown to users) ──────────────
+function humanizeKey(k: string): string {
+  return k.replace(/[_-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()).trim()
+}
+function formatValue(v: any): string {
+  if (v === null || v === undefined || v === '') return '—'
+  if (typeof v === 'number') return v.toLocaleString('en-IN')
+  if (typeof v === 'boolean') return v ? 'Yes' : 'No'
+  if (Array.isArray(v)) return v.map(formatValue).join(', ')
+  if (typeof v === 'object') return Object.entries(v).map(([k, val]) => `${humanizeKey(k)}: ${formatValue(val)}`).join('; ')
+  return String(v)
+}
+
+function ArrayTable({ rows }: { rows: any[] }) {
+  if (!rows || rows.length === 0) return <Typography variant="caption" color="text.secondary">None</Typography>
+  if (typeof rows[0] !== 'object' || rows[0] === null) {
+    return <Typography variant="body2">{rows.map(formatValue).join(', ')}</Typography>
+  }
+  const cols = Array.from(new Set(rows.flatMap((r) => Object.keys(r || {})).filter((k) => !k.startsWith('_'))))
+  return (
+    <Table size="small" sx={{ '& td, & th': { px: 1.5 } }}>
+      <TableHead>
+        <TableRow>{cols.map((c) => <TableCell key={c} sx={{ fontWeight: 700 }}>{humanizeKey(c)}</TableCell>)}</TableRow>
+      </TableHead>
+      <TableBody>
+        {rows.map((r, i) => (
+          <TableRow key={i}>{cols.map((c) => <TableCell key={c}>{formatValue(r?.[c])}</TableCell>)}</TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  )
+}
+
+function ExtractedView({ data }: { data: any }) {
+  if (!data || typeof data !== 'object') {
+    return <Typography color="text.secondary">No extracted data available yet</Typography>
+  }
+  const entries = Object.entries(data).filter(([k]) => !k.startsWith('_'))
+  const simple = entries.filter(([, v]) => v === null || typeof v !== 'object')
+  const nested = entries.filter(([, v]) => v && typeof v === 'object')
+  if (entries.length === 0) {
+    return <Typography color="text.secondary">No extracted data available yet</Typography>
+  }
+  return (
+    <Box>
+      {simple.length > 0 && (
+        <Table size="small" sx={{ '& td': { px: 1.5, py: 0.75 } }}>
+          <TableBody>
+            {simple.map(([k, v]) => (
+              <TableRow key={k}>
+                <TableCell sx={{ fontWeight: 600, width: '32%', color: 'text.secondary', verticalAlign: 'top' }}>{humanizeKey(k)}</TableCell>
+                <TableCell sx={{ fontWeight: 500 }}>{formatValue(v)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+      {nested.map(([k, v]) => (
+        <Box key={k} sx={{ mt: 2 }}>
+          <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.75 }}>{humanizeKey(k)}</Typography>
+          {Array.isArray(v) ? <ArrayTable rows={v as any[]} /> : <ExtractedView data={v} />}
+        </Box>
+      ))}
+    </Box>
+  )
+}
+
 export default function DocumentDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -620,11 +687,9 @@ export default function DocumentDetail() {
       <TabPanel value={tab} index={1}>
         <Card>
           <CardContent>
-            <Typography variant="subtitle2" fontWeight={700} gutterBottom>Raw Extracted Fields</Typography>
+            <Typography variant="subtitle2" fontWeight={700} gutterBottom>Extracted Fields</Typography>
             {doc.extracted_data ? (
-              <Box component="pre" sx={{ fontSize: 12, overflow: 'auto', bgcolor: '#ffffff', p: 2, borderRadius: 2 }}>
-                {JSON.stringify(doc.extracted_data, null, 2)}
-              </Box>
+              <ExtractedView data={doc.extracted_data} />
             ) : (
               <Typography color="text.secondary">No extracted data available yet</Typography>
             )}
@@ -1164,10 +1229,21 @@ export default function DocumentDetail() {
                       <Typography variant="caption" color="text.secondary">
                         {new Date(log.timestamp).toLocaleString()} | {log.entity_type}
                       </Typography>
-                      {log.after_state && (
-                        <Box component="pre" sx={{ fontSize: 10, mt: 0.5, bgcolor: '#ffffff', p: 1, borderRadius: 1, maxHeight: 80, overflow: 'auto' }}>
-                          {JSON.stringify(log.after_state, null, 2)}
+                      {log.after_state && typeof log.after_state === 'object' && (
+                        <Box sx={{ mt: 0.5 }}>
+                          {Object.entries(log.after_state)
+                            .filter(([k]) => !k.startsWith('_'))
+                            .map(([k, v]) => (
+                              <Typography key={k} variant="caption" display="block" color="text.secondary">
+                                {humanizeKey(k)}: <strong style={{ color: '#1a1a1a' }}>{formatValue(v)}</strong>
+                              </Typography>
+                            ))}
                         </Box>
+                      )}
+                      {log.after_state && typeof log.after_state !== 'object' && (
+                        <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5 }}>
+                          {formatValue(log.after_state)}
+                        </Typography>
                       )}
                     </Box>
                   }
