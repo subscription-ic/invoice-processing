@@ -162,7 +162,7 @@ async def get_exception_summary(
                 Document.id != doc.id,
                 Document.status.notin_(["REJECTED", "FAILED"]),
             )
-            .order_by(Document.created_at)
+            .order_by(Document.created_at.desc())
             .limit(1)
         )
         existing = dup_result.scalar_one_or_none()
@@ -207,6 +207,12 @@ async def get_exception_summary(
                         "field": "Document Status",
                         "new_value": doc.status,
                         "existing_value": existing.status,
+                        "match": None,
+                    },
+                    {
+                        "field": "Uploaded Date",
+                        "new_value": doc.created_at.strftime("%d %b %Y, %I:%M %p") if doc.created_at else "—",
+                        "existing_value": existing.created_at.strftime("%d %b %Y, %I:%M %p") if existing.created_at else "—",
                         "match": None,
                     },
                 ],

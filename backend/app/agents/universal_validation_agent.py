@@ -108,6 +108,7 @@ class UniversalValidationAgent(BaseAgent):
         fail_count = 0
         warn_count = 0
         duplicate_detected = False
+        duplicate_reason = None
         for rule_code, rule_name, status, expected, actual, reason, severity in results:
             vr = ValidationResult(
                 document_id=document_id,
@@ -125,6 +126,7 @@ class UniversalValidationAgent(BaseAgent):
                 fail_count += 1
                 if rule_code == "DUPLICATE_INVOICE":
                     duplicate_detected = True
+                    duplicate_reason = reason
             elif status == ValidationStatus.WARNING:
                 warn_count += 1
 
@@ -161,8 +163,9 @@ class UniversalValidationAgent(BaseAgent):
                 severity=ExceptionSeverity.HIGH,
                 queue=ExceptionQueue.AP_TEAM,
                 title="Duplicate Invoice Detected",
-                description="An invoice with the same number already exists in the system. "
-                            "This document has been held to prevent double payment.",
+                description=(duplicate_reason or
+                            "An invoice with the same number and vendor already exists.") +
+                            " This document has been held to prevent double payment.",
                 agent_raised_by=self.name,
                 status=ExceptionStatus.OPEN,
                 sla_hours=settings.SLA_AP_TEAM_HOURS,
@@ -264,18 +267,48 @@ class UniversalValidationAgent(BaseAgent):
         if not invoice_number:
             return ("DUPLICATE_INVOICE", "Duplicate Invoice Check", ValidationStatus.SKIPPED, "Unique invoice", None, "Cannot check duplicate without invoice number", "FAIL")
 
-        existing = (
+        # A true duplicate requires BOTH the same invoice number AND the same vendor.
+        # (Different vendors commonly reuse simple invoice numbers like "INV-001".)
+        def _norm(s):
+            return (s or "").strip().upper()
+
+        cur_gstin = _norm(vendor_data.get("gstin"))
+        cur_pan = _norm(vendor_data.get("pan"))
+        cur_name = _norm(vendor_data.get("name"))
+        cur_vid = doc.vendor_id
+
+        def _same_vendor(other: Document) -> bool:
+            if cur_vid and other.vendor_id and cur_vid == other.vendor_id:
+                return True
+            ov = (other.extracted_data or {}).get("vendor") or {}
+            og, op, on = _norm(ov.get("gstin")), _norm(ov.get("pan")), _norm(ov.get("name"))
+            if cur_gstin and og and cur_gstin == og:
+                return True
+            if cur_pan and op and cur_pan == op:
+                return True
+            if cur_name and on and cur_name == on:
+                return True
+            return False
+
+        candidates = (
             self.db.query(Document)
             .filter(
                 Document.invoice_number == invoice_number,
                 Document.id != doc.id,
                 Document.status.notin_(["REJECTED", "FAILED"]),
             )
-            .first()
+            .order_by(Document.created_at.desc())
+            .all()
         )
-        if existing:
-            return ("DUPLICATE_INVOICE", "Duplicate Invoice Check", ValidationStatus.FAIL, "Unique invoice", invoice_number, f"Duplicate found: {existing.document_id}", "FAIL")
-        return ("DUPLICATE_INVOICE", "Duplicate Invoice Check", ValidationStatus.PASS, "Unique invoice", invoice_number, "No duplicate found", "FAIL")
+        match = next((c for c in candidates if _same_vendor(c)), None)
+        if match:
+            when = match.created_at.strftime("%d %b %Y, %I:%M %p") if match.created_at else "an earlier date"
+            vname = vendor_data.get("name") or (match.extracted_data or {}).get("vendor", {}).get("name") or "the same vendor"
+            msg = (f"Duplicate of {match.document_id} — same invoice no. '{invoice_number}' from {vname}, "
+                   f"last uploaded {when}.")
+            return ("DUPLICATE_INVOICE", "Duplicate Invoice Check", ValidationStatus.FAIL, "Unique invoice", invoice_number, msg, "FAIL")
+        # Same invoice number exists but from a DIFFERENT vendor → not a duplicate.
+        return ("DUPLICATE_INVOICE", "Duplicate Invoice Check", ValidationStatus.PASS, "Unique invoice", invoice_number, "No duplicate found (invoice no. + vendor are unique)", "FAIL")
 
     def _validate_dates(self, invoice: Dict) -> List[Tuple]:
         results = []
