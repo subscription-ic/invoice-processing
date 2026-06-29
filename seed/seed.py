@@ -181,7 +181,7 @@ def seed_documents(db: Session, vendors: list, pos: list, users: list) -> int:
 
     from sqlalchemy import text as _text
 
-    SEED_VER = "v4-static-sla"
+    SEED_VER = "v5-static"
     ver_cfg = db.query(Configuration).filter(Configuration.key == "demo_seed_version").first()
     if ver_cfg and ver_cfg.value == SEED_VER and db.query(Document).filter(Document.document_id == "DOC-1").first():
         print("  Demo data already at current version - skipping.")
