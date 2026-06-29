@@ -181,7 +181,7 @@ def seed_documents(db: Session, vendors: list, pos: list, users: list) -> int:
 
     from sqlalchemy import text as _text
 
-    SEED_VER = "v3-generic-admin"
+    SEED_VER = "v4-static-sla"
     ver_cfg = db.query(Configuration).filter(Configuration.key == "demo_seed_version").first()
     if ver_cfg and ver_cfg.value == SEED_VER and db.query(Document).filter(Document.document_id == "DOC-1").first():
         print("  Demo data already at current version - skipping.")
@@ -339,7 +339,7 @@ def seed_documents(db: Session, vendors: list, pos: list, users: list) -> int:
             db.add(Approval(
                 document_id=doc.id, approval_level=1, approver_id=admin.id,
                 status=ApprovalStatus.PENDING, authority_amount=total_amount,
-                deadline=now + timedelta(days=2), created_at=created,
+                deadline=now + timedelta(days=30), created_at=created,
             ))
 
         if status in (DocumentStatus.EXCEPTION, DocumentStatus.HUMAN_REVIEW_REQUIRED):
@@ -349,7 +349,7 @@ def seed_documents(db: Session, vendors: list, pos: list, users: list) -> int:
                 severity=sev, queue=queue, title=title, description=desc,
                 agent_raised_by="VALIDATION_AGENT", assigned_to=admin.id,
                 status=ExceptionStatus.OPEN, sla_hours=8,
-                sla_deadline=now + timedelta(hours=8), created_at=created,
+                sla_deadline=now + timedelta(days=30), created_at=created,
             ))
 
         count += 1
