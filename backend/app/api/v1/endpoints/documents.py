@@ -41,6 +41,14 @@ async def demo_reset(
     """Demo helper: delete all UPLOADED documents (DOC-101 and above), leaving the
     100 static seed documents (DOC-1..DOC-100) intact. Called by the UI once per
     browser session so uploads always restart from DOC-101."""
+    # Keep the static demo data pristine: any seeded exceptions that were
+    # auto-escalated by background jobs are reset back to OPEN (demo is static).
+    await db.execute(text(
+        "UPDATE exceptions SET status='OPEN', escalation_count=0, escalated_to=NULL, escalated_at=NULL "
+        "WHERE status IN ('ESCALATED','IN_PROGRESS')"
+    ))
+    await db.commit()
+
     rows = (await db.execute(
         select(Document.id, Document.document_id).where(Document.document_id.like("DOC-%"))
     )).all()
@@ -50,7 +58,7 @@ async def demo_reset(
         if suf.isdigit() and int(suf) > 100:
             ids.append(str(_id))
     if not ids:
-        return {"deleted": 0}
+        return {"deleted": 0, "exceptions_reset": True}
 
     for tbl in _NONCASCADE_CHILDREN:
         stmt = text(f"DELETE FROM {tbl} WHERE document_id::text IN :ids").bindparams(
