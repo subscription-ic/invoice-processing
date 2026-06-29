@@ -51,6 +51,7 @@ export const documentsApi = {
     form.append('file', file)
     return apiClient.post('/documents/upload', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120000, // allow for backend cold-start; retry handles failures
     })
   },
   list: (params?: object) => apiClient.get('/documents', { params }),

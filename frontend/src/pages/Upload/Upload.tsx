@@ -39,8 +39,27 @@ const formatSize = (bytes: number) => {
 
 const uid = () => Math.random().toString(36).slice(2)
 
-// Max concurrent uploads — keeps server load predictable
-const CONCURRENT_UPLOADS = 5
+// Max concurrent uploads — keep low so a scale-to-zero backend isn't overwhelmed
+// while it cold-starts / processes in-process pipelines.
+const CONCURRENT_UPLOADS = 2
+
+// Retry an upload a few times so a cold-start (503) or transient network error
+// self-heals once the backend is awake.
+async function uploadWithRetry(file: File, attempts = 4): Promise<any> {
+  let lastErr: any
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await documentsApi.upload(file)
+    } catch (err: any) {
+      lastErr = err
+      const status = err?.response?.status
+      // Don't retry real client errors (bad file type, too large, etc.)
+      if (status && status >= 400 && status < 500 && status !== 408 && status !== 429) throw err
+      await new Promise((r) => setTimeout(r, 1500 * (i + 1)))
+    }
+  }
+  throw lastErr
+}
 
 async function runConcurrent<T>(
   items: T[],
@@ -111,7 +130,7 @@ export default function Upload() {
       ))
 
       try {
-        const { data } = await documentsApi.upload(item.file)
+        const { data } = await uploadWithRetry(item.file)
 
         setFiles(prev => prev.map(f =>
           f.id === item.id

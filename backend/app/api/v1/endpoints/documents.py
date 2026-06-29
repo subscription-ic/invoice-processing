@@ -6,10 +6,10 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import List, Optional
 from uuid import UUID
 
-# Bounded pool — max 20 simultaneous pipeline workers.
-# Extra uploads queue here and process as slots free.
-# Sized for ~1 000 docs/day with typical 30-60 s per pipeline run.
-_pipeline_pool = ThreadPoolExecutor(max_workers=20, thread_name_prefix="pipeline")
+# Bounded pool — limits SIMULTANEOUS in-process pipelines so a small container
+# can't be OOM-killed when many docs are uploaded at once. Extra uploads queue
+# here and process as slots free (intake still returns 202 immediately).
+_pipeline_pool = ThreadPoolExecutor(max_workers=3, thread_name_prefix="pipeline")
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status
 from fastapi.responses import FileResponse
